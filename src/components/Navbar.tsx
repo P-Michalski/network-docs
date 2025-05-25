@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
 const Nav = styled.nav`
@@ -16,10 +16,10 @@ const Nav = styled.nav`
 
 const Navbar: React.FC = () => (
   <Nav>
-    <Link to="/devices">Urządzenia</Link>
-    <Link to="/devices/add">Dodaj urządzenie</Link>
-    <Link to="/connections">Połączenia</Link>
-    <Link to="/network-map">Mapa sieci</Link>
+    <NavLink to="/devices">Urządzenia</NavLink>
+    <NavLink to="/addDevice">Dodaj urządzenie</NavLink>
+    <NavLink to="/connections">Połączenia</NavLink>
+    <NavLink to="/network-map">Mapa sieci</NavLink>
   </Nav>
 );
 
