@@ -2,11 +2,11 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import styled from 'styled-components';
 
-const Nav = styled.nav`
-  padding: 1rem;
+const Nav = styled.nav`  
+  padding: 5px 20px;
   background-color: #282c34;
   display: flex;
-  gap: 1rem;
+  gap: 20px;
   a {
     color: white;
     text-decoration: none;

@@ -3,6 +3,8 @@ import { createGlobalStyle } from "styled-components";
 export const GlobalStyles = createGlobalStyle`
     html {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
     }
 
     *,
@@ -14,6 +16,7 @@ export const GlobalStyles = createGlobalStyle`
     body {
         background-color: #eeeeee;
         word-break: break-all;
-        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        padding: 0;
     }
 `;
