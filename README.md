@@ -1,3 +1,15 @@
+# Network Devices Manager
+
+Aplikacja webowa do zarządzania urządzeniami sieciowymi, napisana w React + TypeScript + Vite.
+
+**Uwaga:** Backend (API) oraz baza danych działają lokalnie na Twoim komputerze (localhost). Aby w pełni korzystać z projektu, musisz uruchomić backend oraz bazę danych u siebie. Szczegóły i instrukcje znajdziesz w osobnym repozytorium:
+
+(link pojawi się w swoim czasie)
+
+W repozytorium backendu znajdzie się także instrukcja konfiguracji oraz uruchomienia API i bazy danych.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
