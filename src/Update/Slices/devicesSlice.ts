@@ -41,6 +41,28 @@ const devicesSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    deleteDeviceRequest(state, _action: PayloadAction<number>) {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteDeviceSuccess(state) {
+      state.loading = false;
+    },
+    deleteDeviceFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    updateDeviceRequest(state, _action: PayloadAction<any>) {
+      state.loading = true;
+      state.error = null;
+    },
+    updateDeviceSuccess(state) {
+      state.loading = false;
+    },
+    updateDeviceFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -51,6 +73,12 @@ export const {
   addDeviceRequest,
   addDeviceSuccess,
   addDeviceFailure,
+  deleteDeviceRequest,
+  deleteDeviceSuccess,
+  deleteDeviceFailure,
+  updateDeviceRequest,
+  updateDeviceSuccess,
+  updateDeviceFailure,
 } = devicesSlice.actions;
 
 export const devicesReducer = devicesSlice.reducer;
