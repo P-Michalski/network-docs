@@ -1,10 +1,10 @@
 import React from 'react';
 import { Route, Navigate, HashRouter, Routes } from 'react-router-dom';
-import DeviceListPage from './pages/DeviceListPage';
-import AddDevicePage from './pages/AddDevicePage';
-import ConnectionManagerPage from './pages/ConnectionManagerPage';
-import NetworkMapPage from './pages/NetworkMapPage';
-import Navbar from './components/Navbar';
+import DeviceListPage from './Views/pages/DeviceListPage';
+import AddDevicePage from './Views/pages/AddDevicePage';
+import ConnectionManagerPage from './Views/pages/ConnectionManagerPage';
+import NetworkMapPage from './Views/pages/NetworkMapPage';
+import Navbar from './Views/Navbar';
 
 const App: React.FC = () => {
   return (

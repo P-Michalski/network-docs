@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { fetchDevicesDetails } from '../api/device';
-import type { DeviceDetails } from '../types/device';
+import { fetchDevicesDetails } from '../../api/device';
+import { DeviceDetails } from '../../Models/DeviceDetails.class';
 
 const DeviceList = () => {
   const [devices, setDevices] = useState<DeviceDetails[]>([]);
