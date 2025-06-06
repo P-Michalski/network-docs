@@ -1,73 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useSelector, useDispatch } from 'react-redux';
+import { deviceDetailsSchema, type DeviceDetailsForm, defaultFormValues } from './formSchemas/addDeviceFormSchema';
 import type { RootState } from '../../store';
 import { fetchDevicesRequest, deleteDeviceRequest, updateDeviceRequest } from '../../Update/Slices/devicesSlice';
-import { FormField, Label, Input, ErrorMsg, Select } from '../components/DeviceForm/StyledFormComponents';
+import { FormField, Label, Input, ErrorMsg, Select, Fieldset, MainContainer, DeviceForm, WifiCardBox, WifiCardInnerRow, SidePanel, DeviceListItem, EditButton, DeleteButton, CancelEditButton, SidePanelHeader, SidePanelList, Button, AddButton, RemoveButton, Legend, DeviceTypeSpan } from '../components/DeviceForm/StyledFormComponents';
 
-const deviceDetailsSchema = z.object({
-  urzadzenie: z.object({
-    nazwa_urzadzenia: z.string().min(1, 'Podaj nazwę urządzenia'),
-    ilosc_portow: z.coerce.number().int().min(1, 'Musi mieć przynajmniej 1 port'),
-  }),
-  typ: z.object({
-    typ_u: z.string().min(1, 'Podaj typ urządzenia'),
-  }),
-  lokalizacja: z.object({
-    miejsce: z.string().min(1, 'Podaj miejsce'),
-    szafa: z.string().min(1, 'Podaj szafę'),
-    rack: z.string().min(1, 'Podaj rack'),
-  }),
-  mac: z.object({
-    MAC: z.string().min(1, 'Podaj adres MAC'),
-  }),
-  porty: z.array(z.object({
-    nazwa: z.string().min(1, 'Podaj nazwę portu'),
-    status: z.string().min(1, 'Podaj status'),
-    polaczenia_portu: z.array(z.object({
-      id_p: z.number().optional(),
-      id_u: z.number().optional(),
-      nazwa: z.string().min(1, 'Podaj nazwę połączenia portu'),
-      status: z.string().min(1, 'Podaj status połączenia portu'),
-    })),
-  })),
-  karty_wifi: z.array(z.object({
-    nazwa: z.string().min(1, 'Podaj nazwę karty'),
-    status: z.string().min(1, 'Podaj status'),
-    pasmo: z.object({
-      pasmo24GHz: z.coerce.number(),
-      pasmo5GHz: z.coerce.number(),
-    }),
-    wersja: z.object({
-      WIFI4: z.coerce.number(),
-      WIFI5: z.coerce.number(),
-      WIFI6: z.coerce.number(),
-    }),
-    predkosc: z.object({
-      '200Mb': z.coerce.number(),
-      '800Mb': z.coerce.number(),
-      '2Gb': z.coerce.number(),
-    }),
-  })),
-});
-
-type DeviceDetailsForm = z.infer<typeof deviceDetailsSchema>;
-
-const defaultFormValues: DeviceDetailsForm = {
-  porty: [{ nazwa: '', status: '', polaczenia_portu: [] }],
-  karty_wifi: [{
-    nazwa: '', status: '',
-    pasmo: { pasmo24GHz: 0, pasmo5GHz: 0 },
-    wersja: { WIFI4: 0, WIFI5: 0, WIFI6: 0 },
-    predkosc: { '200Mb': 0, '800Mb': 0, '2Gb': 0 },
-  }],
-  urzadzenie: { nazwa_urzadzenia: '', ilosc_portow: 1 },
-  typ: { typ_u: '' },
-  lokalizacja: { miejsce: '', szafa: '', rack: '' },
-  mac: { MAC: '' },
-};
 
 const AddDevicePage = () => {
   const dispatch = useDispatch();
@@ -172,10 +111,10 @@ const AddDevicePage = () => {
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32 }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ flex: 1, marginBottom: 32, maxWidth: 600 }}>
-        <fieldset>
-          <legend>Podstawowe dane</legend>
+    <MainContainer>
+      <DeviceForm onSubmit={handleSubmit(onSubmit)}>
+        <Fieldset>
+          <Legend>Podstawowe dane</Legend>
           <FormField>
             <Label htmlFor="nazwa_urzadzenia">Nazwa urządzenia:</Label>
             <Input id="nazwa_urzadzenia" {...register('urzadzenie.nazwa_urzadzenia')} />
@@ -186,9 +125,9 @@ const AddDevicePage = () => {
             <Input id="ilosc_portow" type="number" min={1} {...register('urzadzenie.ilosc_portow', { valueAsNumber: true })} />
             {errors.urzadzenie?.ilosc_portow && <ErrorMsg>{errors.urzadzenie.ilosc_portow.message}</ErrorMsg>}
           </FormField>
-        </fieldset>
-        <fieldset>
-          <legend>Typ urządzenia</legend>
+        </Fieldset>
+        <Fieldset>
+          <Legend>Typ urządzenia</Legend>
           <FormField>
             <Select id="typ_u" {...register('typ.typ_u')}>
               <option value="">Wybierz typ...</option>
@@ -199,9 +138,9 @@ const AddDevicePage = () => {
             </Select>
             {errors.typ?.typ_u && <ErrorMsg>{errors.typ.typ_u.message}</ErrorMsg>}
           </FormField>
-        </fieldset>
-        <fieldset>
-          <legend>Lokalizacja</legend>
+        </Fieldset>
+        <Fieldset>
+          <Legend>Lokalizacja</Legend>
           <FormField>
             <Input {...register('lokalizacja.miejsce')} placeholder="Miejsce" />
           </FormField>
@@ -211,15 +150,15 @@ const AddDevicePage = () => {
           <FormField>
             <Input {...register('lokalizacja.rack')} placeholder="Rack" />
           </FormField>
-        </fieldset>
-        <fieldset>
-          <legend>MAC</legend>
+        </Fieldset>
+        <Fieldset>
+          <Legend>MAC</Legend>
           <FormField>
             <Input {...register('mac.MAC')} placeholder="MAC" />
           </FormField>
-        </fieldset>
-        <fieldset>
-          <legend>Porty</legend>
+        </Fieldset>
+        <Fieldset>
+          <Legend>Porty</Legend>
           {portFields.map((field, idx) => (
             <FormField key={field.id}>
               <Input {...register(`porty.${idx}.nazwa`)} placeholder="Nazwa portu" />
@@ -228,15 +167,15 @@ const AddDevicePage = () => {
                 <option value="aktywny">Aktywny</option>
                 <option value="nieaktywny">Nieaktywny</option>
               </Select>
-              <button type="button" onClick={() => removePort(idx)}>-</button>
+              <RemoveButton type="button" onClick={() => removePort(idx)}>Usuń port</RemoveButton>
             </FormField>
           ))}
-          <button type="button" onClick={() => appendPort({ nazwa: '', status: '', polaczenia_portu: [] })}>Dodaj port</button>
-        </fieldset>
-        <fieldset>
-          <legend>Karty WiFi</legend>
+          <AddButton type="button" onClick={() => appendPort({ nazwa: '', status: '', polaczenia_portu: [] })}>Dodaj port</AddButton>
+        </Fieldset>
+        <Fieldset>
+          <Legend>Karty WiFi</Legend>
           {wifiFields.map((field, idx) => (
-            <div key={field.id} style={{ marginBottom: 16, border: '1px solid #eee', padding: 8 }}>
+            <WifiCardBox key={field.id}>
               <FormField>
                 <Label>Nazwa karty:</Label>
                 <Input {...register(`karty_wifi.${idx}.nazwa`)} placeholder="Nazwa karty WiFi" />
@@ -247,9 +186,9 @@ const AddDevicePage = () => {
                   <option value="nieaktywny">Nieaktywny</option>
                 </Select>
               </FormField>
-              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 8 }}>
-                <fieldset style={{ minWidth: 180, padding: 8 }}>
-                  <legend>Pasmo</legend>
+              <WifiCardInnerRow>
+                <Fieldset>
+                  <Legend>Pasmo</Legend>
                   <FormField>
                     <Label>2.4GHz:</Label>
                     <Select
@@ -270,9 +209,9 @@ const AddDevicePage = () => {
                       <option value="0">Nie</option>
                     </Select>
                   </FormField>
-                </fieldset>
-                <fieldset style={{ minWidth: 180, padding: 8 }}>
-                  <legend>Wersja WiFi</legend>
+                </Fieldset>
+                <Fieldset>
+                  <Legend>Wersja WiFi</Legend>
                   <FormField>
                     <Label>WIFI4:</Label>
                     <Select
@@ -303,9 +242,9 @@ const AddDevicePage = () => {
                       <option value="0">Nie</option>
                     </Select>
                   </FormField>
-                </fieldset>
-                <fieldset style={{ minWidth: 180, padding: 8 }}>
-                  <legend>Prędkość</legend>
+                </Fieldset>
+                <Fieldset>
+                  <Legend>Prędkość</Legend>
                   <FormField>
                     <Label>200Mb:</Label>
                     <Select
@@ -336,50 +275,50 @@ const AddDevicePage = () => {
                       <option value="0">Nie</option>
                     </Select>
                   </FormField>
-                </fieldset>
-              </div>
-              <button type="button" onClick={() => removeWifi(idx)}>-</button>
-            </div>
+                </Fieldset>
+              </WifiCardInnerRow>
+              <RemoveButton type="button" onClick={() => removeWifi(idx)}>Usuń kartę WiFi</RemoveButton>
+            </WifiCardBox>
           ))}
-          <button type="button" onClick={() => appendWifi({
+          <AddButton type="button" onClick={() => appendWifi({
             nazwa: '', status: '',
             pasmo: { pasmo24GHz: 0, pasmo5GHz: 0 },
             wersja: { WIFI4: 0, WIFI5: 0, WIFI6: 0 },
             predkosc: { '200Mb': 0, '800Mb': 0, '2Gb': 0 },
-          })}>Dodaj kartę WiFi</button>
-        </fieldset>
-        <button type="submit">{editingDevice ? 'Zapisz zmiany' : 'Dodaj urządzenie'}</button>
+          })}>Dodaj kartę WiFi</AddButton>
+        </Fieldset>
+        <Button type="submit">{editingDevice ? 'Zapisz zmiany' : 'Dodaj urządzenie'}</Button>
         {editingDevice && (
-          <button type="button" style={{ marginLeft: 12 }} onClick={() => { setEditingDevice(null); reset(defaultFormValues); }}>
+          <CancelEditButton type="button" onClick={() => { setEditingDevice(null); reset(defaultFormValues); }}>
             Anuluj edycję
-          </button>
+          </CancelEditButton>
         )}
-      </form>
-      <aside style={{ minWidth: 320, maxWidth: 400, background: '#fafbfc', border: '1px solid #eee', borderRadius: 8, padding: 20, boxShadow: '0 2px 8px #0001' }}>
-        <h3 style={{ marginTop: 0 }}>Lista urządzeń</h3>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+      </DeviceForm>
+      <SidePanel>
+        <SidePanelHeader>Lista urządzeń</SidePanelHeader>
+        <SidePanelList>
           {deviceList.map((dev: any) => {
             const deviceName = dev.urzadzenie?.nazwa_urzadzenia || '-';
             const deviceType = dev.typ?.typ_u || '-';
             return (
-              <li key={dev.urzadzenie?.id_u} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #eee' }}>
+              <DeviceListItem key={dev.urzadzenie?.id_u}>
                 <span>
-                  {deviceName} ({deviceType})
+                  {deviceName} <DeviceTypeSpan>{deviceType}</DeviceTypeSpan>
                 </span>
                 <span>
-                  <button type="button" style={{ marginRight: 8 }} onClick={() => handleEdit(dev)}>Edit</button>
-                  <button type="button" style={{ color: '#d32f2f' }} onClick={() => {
+                  <EditButton type="button" onClick={() => handleEdit(dev)}>Edit</EditButton>
+                  <DeleteButton type="button" onClick={() => {
                     if (window.confirm('Czy na pewno chcesz usunąć to urządzenie?')) {
                       dispatch(deleteDeviceRequest(dev.urzadzenie?.id_u));
                     }
-                  }}>Usuń</button>
+                  }}>Usuń</DeleteButton>
                 </span>
-              </li>
+              </DeviceListItem>
             );
           })}
-        </ul>
-      </aside>
-    </div>
+        </SidePanelList>
+      </SidePanel>
+    </MainContainer>
   );
 };
 
