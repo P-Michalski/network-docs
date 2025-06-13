@@ -63,6 +63,29 @@ const devicesSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    // --- CONNECTIONS ---
+    addConnectionRequest(state, _action: PayloadAction<any>) {
+      state.loading = true;
+      state.error = null;
+    },
+    addConnectionSuccess(state) {
+      state.loading = false;
+    },
+    addConnectionFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    deleteConnectionRequest(state, _action: PayloadAction<any>) {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteConnectionSuccess(state) {
+      state.loading = false;
+    },
+    deleteConnectionFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -79,6 +102,12 @@ export const {
   updateDeviceRequest,
   updateDeviceSuccess,
   updateDeviceFailure,
+  addConnectionRequest,
+  addConnectionSuccess,
+  addConnectionFailure,
+  deleteConnectionRequest,
+  deleteConnectionSuccess,
+  deleteConnectionFailure,
 } = devicesSlice.actions;
 
 export const devicesReducer = devicesSlice.reducer;

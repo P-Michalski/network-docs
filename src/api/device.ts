@@ -1,19 +1,19 @@
 import api from './axios';
-import { Device } from '../Models/Device.class';
-import { DeviceDetails } from '../Models/DeviceDetails.class';
-
-export const fetchDevices = async (): Promise<Device[]> => {
-  const response = await api.get('/urzadzenia');
-  return response.data.map(Device.fromApi);
-};
+import type { Device } from '../Models/Device';
+import type { DeviceDetails } from '../Models/DeviceDetails';
 
 export const fetchDevicesDetails = async (): Promise<DeviceDetails[]> => {
-  const response = await api.get('/urzadzenia/all-details');
-  return response.data.map(DeviceDetails.fromApi);
+  const response = await api.get<DeviceDetails[]>('/urzadzenia/all-details');
+  return response.data;
 };
 
 export const fetchDevice = async (id: number): Promise<Device> => {
   const response = await api.get<Device>(`/urzadzenia/${id}`);
+  return response.data;
+};
+
+export const fetchDevices = async (): Promise<Device[]> => {
+  const response = await api.get<Device[]>(`/urzadzenia`);
   return response.data;
 };
 
@@ -23,14 +23,25 @@ export const fetchDeviceDetails = async (id: number): Promise<DeviceDetails> => 
 };
 
 export const addDevice = async (device: Omit<DeviceDetails, 'urzadzenie' | 'typ' | 'porty' | 'karty_wifi' | 'mac' | 'lokalizacja'> & DeviceDetails): Promise<void> => {
-  await api.post('/urzadzenia/full', device);
+  console.log('API: addDevice wywołana');
+  console.log('API: device:', device);
+  console.log('API: JSON.stringify(device):', JSON.stringify(device, null, 2));
+  
+  const response = await api.post('/urzadzenia/full', device);
+  console.log('API: addDevice response:', response);
 };
 
-export const deleteDevice = async (id_u: number) => {
-  // UWAGA: W przyszłości należy usunąć również połączenia, w których urządzenie uczestniczyło (TODO w backendzie)
-  await api.delete(`/urzadzenia/full/${id_u}`);
+export const deleteDevice = async (id: number): Promise<void> => {
+  await api.delete(`/urzadzenia/${id}`);
 };
 
-export const updateDevice = async (id_u: number, device: DeviceDetails): Promise<void> => {
-  await api.put(`/urzadzenia/full/${id_u}`, device);
+export const updateDevice = async (id: number, device: DeviceDetails): Promise<void> => {
+  console.log('API: updateDevice wywołana');
+  console.log('API: id:', id);
+  console.log('API: device:', device);
+  console.log('API: JSON.stringify(device):', JSON.stringify(device, null, 2));
+  
+  // Wysyłaj dokładnie taki sam format jak addDevice
+  const response = await api.put(`/urzadzenia/full/${id}`, device);
+  console.log('API: response:', response);
 };

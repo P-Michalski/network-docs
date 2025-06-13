@@ -52,35 +52,58 @@ const AddDevicePage = () => {
 
   // After adding a device, reload the list
   const onSubmit = (data: DeviceDetailsForm) => {
-    try {
-      const mappedData = JSON.parse(JSON.stringify({
+    try {      
+      // Upewnij się, że mappedData.urzadzenie.nazwa_urzadzenia NIE jest null/undefined
+      const mappedData = {
         ...data,
+        urzadzenie: {
+          ...data.urzadzenie,
+          nazwa_urzadzenia: String(data.urzadzenie.nazwa_urzadzenia ?? ''),
+          ilosc_portow: Number(data.urzadzenie.ilosc_portow ?? (data.porty?.length ?? 1)),
+        },
         typ: {
-          id_typu: 0,
-          id_u: 1,
+          id_typu: editingDevice?.typ?.id_typu ?? 0,
+          id_u: editingDevice?.urzadzenie?.id_u ?? 1,
           typ_u: data.typ.typ_u,
         },
-      }));
+      };
+      
+      // DEBUG: sprawdź co wysyłasz do backendu
+      console.log('=== DEBUG ONSUBMIT ===');
+      console.log('originalData from form:', data);
+      console.log('mappedData:', mappedData);
+      console.log('editingDevice:', editingDevice);
+      console.log('isEditing:', !!editingDevice);
+      console.log('mappedData.urzadzenie.nazwa_urzadzenia type:', typeof mappedData.urzadzenie.nazwa_urzadzenia);
+      console.log('mappedData.urzadzenie.nazwa_urzadzenia value:', mappedData.urzadzenie.nazwa_urzadzenia);
+      console.log('mappedData.urzadzenie.ilosc_portow type:', typeof mappedData.urzadzenie.ilosc_portow);
+      console.log('mappedData.urzadzenie.ilosc_portow value:', mappedData.urzadzenie.ilosc_portow);
+      console.log('========================');
+      
       if (editingDevice) {
         dispatch(updateDeviceRequest({ id_u: editingDevice.urzadzenie.id_u, device: mappedData }));
         setEditingDevice(null);
         reset(defaultFormValues); // czyść do domyślnych wartości
       } else {
+        console.log('Dodaję nowe urządzenie...');
         dispatch({ type: 'devices/addDeviceRequest', payload: mappedData });
         reset(defaultFormValues);
       }
     } catch (err) {
+      console.error('Błąd w onSubmit:', err);
       alert('Błąd podczas zapisu urządzenia');
     }
   };
 
   const handleEdit = (dev: any) => {
+    // Upewnij się, że zawsze są wartości domyślne dla nazwa_urzadzenia i ilosc_portow
     setEditingDevice(dev);
     reset({
       ...dev,
       urzadzenie: {
         ...dev.urzadzenie,
-        ilosc_portow: dev.urzadzenie?.ilosc_portow || dev.porty?.length || 1,
+        nazwa_urzadzenia: dev.urzadzenie?.nazwa_urzadzenia ?? '',
+        ilosc_portow: dev.urzadzenie?.ilosc_portow ?? dev.porty?.length ?? 1,
       },
       porty: (dev.porty || [{ nazwa: '', status: '', polaczenia_portu: [] }]).map((p: any) => ({
         ...p,
@@ -110,9 +133,20 @@ const AddDevicePage = () => {
     });
   };
 
+  // Sprawdź, czy edytowane urządzenie ma połączenia
+  const hasConnections = editingDevice && (
+    (editingDevice.porty && editingDevice.porty.some((p: any) => p.polaczenia_portu && p.polaczenia_portu.length > 0)) ||
+    (editingDevice.karty_wifi && editingDevice.karty_wifi.some((k: any) => k.polaczenia_karty && k.polaczenia_karty.length > 0))
+  );
+
   return (
     <MainContainer>
       <DeviceForm onSubmit={handleSubmit(onSubmit)}>
+        {editingDevice && hasConnections && (
+          <div style={{ color: 'red', fontWeight: 'bold', marginBottom: 16 }}>
+            Aby edytować to urządzenie, najpierw usuń wszystkie jego połączenia (porty lub karty WiFi).
+          </div>
+        )}
         <Fieldset>
           <Legend>Podstawowe dane</Legend>
           <FormField>
@@ -287,7 +321,7 @@ const AddDevicePage = () => {
             predkosc: { '200Mb': 0, '800Mb': 0, '2Gb': 0 },
           })}>Dodaj kartę WiFi</AddButton>
         </Fieldset>
-        <Button type="submit">{editingDevice ? 'Zapisz zmiany' : 'Dodaj urządzenie'}</Button>
+        <Button type="submit" disabled={!!(editingDevice && hasConnections)}>{editingDevice ? 'Zapisz zmiany' : 'Dodaj urządzenie'}</Button>
         {editingDevice && (
           <CancelEditButton type="button" onClick={() => { setEditingDevice(null); reset(defaultFormValues); }}>
             Anuluj edycję
