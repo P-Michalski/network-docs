@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../store';
 import { MainContainer, DeviceForm, Fieldset, Legend, FormField, Label, Select, Button } from '../components/DeviceForm/StyledFormComponents';
-import { WideSidePanel, WideSidePanelHeader, WideSidePanelList, RemoveConnectionButton } from '../components/ConnectionForm/StyledConnectionFormComponents';
+import { WideSidePanel, WideSidePanelHeader, WideSidePanelList, RemoveConnectionButton, WideSidePanelListItem } from '../components/ConnectionForm/StyledConnectionFormComponents';
 import styled from 'styled-components';
 import { fetchDevicesRequest } from '../../Update/Slices/devicesSlice';
 
@@ -384,14 +384,14 @@ const ConnectionManagerPage = () => {
         </TabBar>
         <WideSidePanelList>
           {(panelTab === 'port' ? allPortConnections : panelTab === 'wifi' ? allWifiConnections : allConnections).map((conn, idx) => (
-            <li key={idx}>
+            <WideSidePanelListItem key={idx}>
               {conn.type === 'port'
                 ? `Port "${conn.port1Name ?? conn.id_p_1 + ' (nie znaleziono)'}" (${conn.dev1Name ?? conn.id_u_1 + ' (nie znaleziono)'}) ↔ Port "${conn.port2Name ?? conn.id_p_2 + ' (nie znaleziono)'}" (${conn.dev2Name ?? conn.id_u_2 + ' (nie znaleziono)'})`
                 : `Karta "${conn.card1Name ?? conn.id_k_1 + ' (nie znaleziono)'}" (${conn.dev1Name ?? conn.id_u_1 + ' (nie znaleziono)'}) ↔ Karta "${conn.card2Name ?? conn.id_k_2 + ' (nie znaleziono)'}" (${conn.dev2Name ?? conn.id_u_2 + ' (nie znaleziono)'})`}
               <RemoveConnectionButton type="button" onClick={() => handleRemoveConnection(conn)} disabled={loading}>
                 Usuń
               </RemoveConnectionButton>
-            </li>
+            </WideSidePanelListItem>
           ))}
         </WideSidePanelList>
       </WideSidePanel>

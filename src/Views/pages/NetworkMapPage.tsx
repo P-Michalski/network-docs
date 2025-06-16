@@ -3,8 +3,13 @@ import type { RootState } from '../../store';
 import ReactFlow, { Background, Controls, MiniMap, Handle, Position } from 'react-flow-renderer';
 import { FaServer, FaWifi, FaDesktop, FaNetworkWired } from 'react-icons/fa';
 import styled from 'styled-components';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { fetchDevicesRequest } from '../../Update/Slices/devicesSlice';
+import type { DeviceDetails } from '../../Models/DeviceDetails';
+import type { Port } from '../../Models/Port';
+import type { PortConnection } from '../../Models/PortConnection';
+import type { WifiConnection } from '../../Models/WifiConnection';
+import type { WifiCard } from '../../Models/WifiCard';
 
 const iconMap: Record<string, React.ReactNode> = {
   'Router': <FaNetworkWired size={32} color="#1976d2" />,
@@ -14,15 +19,16 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const LegendContainer = styled.div`
-  position: absolute;
+  position: fixed;
   top: 10px;
   right: 10px;
+  width: 200px;
   background: rgba(255, 255, 255, 0.95);
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   font-size: 12px;
-  z-index: 1000;
+  z-index: 3000;
   max-width: 200px;
 `;
 
@@ -46,6 +52,15 @@ const LegendItem = styled.div<{ color: string; borderColor: string }>`
     border-radius: 3px;
     margin-right: 8px;
   }
+`;
+
+const LegendLine = styled.div<{ color: string; dashed?: boolean }>`
+  display: inline-block;
+  width: 32px;
+  height: 0;
+  border-top: 4px ${props => props.dashed ? 'dashed' : 'solid'} ${props => props.color};
+  margin-right: 8px;
+  vertical-align: middle;
 `;
 
 const NodeBox = styled.div<{ deviceType?: string }>`
@@ -213,9 +228,100 @@ const createEdgesWithOffsets = (portEdges: any[], wifiEdges: any[]) => {
   return processedEdges;
 };
 
+const SidePanel = styled.div`
+  position: fixed;
+  top: 90px;
+  left: 0;
+  width: 340px;
+  height: calc(100vh - 100px);
+  background: #f7fafd;
+  border-right: 2px solid #1976d2;
+  box-shadow: 2px 0 12px #0002;
+  padding: 28px 22px 22px 22px;
+  z-index: 2000;
+  overflow-y: auto;
+  border-radius: 0 18px 18px 0;
+  display: flex;
+  flex-direction: column;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #1976d2aa;
+  transition: background 0.2s, color 0.2s;
+  &:hover {
+    background: #1976d2;
+    color: #fff;
+  }
+`;
+
+const Tabs = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+`;
+
+const TabButton = styled.button<{ active?: boolean }>`
+  padding: 7px 18px;
+  border: none;
+  border-radius: 16px 16px 0 0;
+  background: ${({ active }) => (active ? '#1976d2' : '#e3f2fd')};
+  color: ${({ active }) => (active ? '#fff' : '#1976d2')};
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: ${({ active }) => (active ? '0 2px 8px #1976d2aa' : 'none')};
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+`;
+
+const PanelTitle = styled.div`
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #1976d2;
+  letter-spacing: 0.5px;
+`;
+
+const PanelSection = styled.div`
+  margin-bottom: 18px;
+`;
+
+const PanelLabel = styled.div`
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #333;
+`;
+
+const PanelList = styled.ul`
+  margin: 0 0 0 12px;
+  padding: 0;
+  font-size: 15px;
+  color: #444;
+  list-style: disc inside;
+`;
+
+const PanelNoData = styled.div`
+  color: #888;
+  font-size: 15px;
+  margin-top: 10px;
+`;
+
 const NetworkMapPage = () => {
   const dispatch = useDispatch();
   const devices = useSelector((state: RootState) => state.devices.devices);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   // Pobierz urządzenia jeśli nie są załadowane
   useEffect(() => {
@@ -434,7 +540,48 @@ const NetworkMapPage = () => {
         </>
       );
     },
-  };  return (
+  };  // Wybrane urządzenie i jego połączenia (przenieś bliżej rendera)
+  const selectedDevice = devices.find(dev => String(dev.urzadzenie.id_u) === selectedDeviceId);
+  let deviceConnections: any[] = [];
+  if (selectedDevice) {
+    selectedDevice.porty?.forEach(port => {
+      port.polaczenia_portu?.forEach((conn: PortConnection) => {
+        deviceConnections.push({
+          type: 'port',
+          portName: port.nazwa,
+          targetDevice: devices.find((d: DeviceDetails) => d.porty?.some((p: Port) => p.id_p === conn.id_p_2)),
+          targetPort: conn.id_p_2
+        });
+      });
+    });
+    selectedDevice.karty_wifi?.forEach(card => {
+      card.polaczenia_karty?.forEach((conn: WifiConnection) => {
+        deviceConnections.push({
+          type: 'wifi',
+          cardName: card.nazwa,
+          targetDevice: devices.find((d: DeviceDetails) => d.karty_wifi?.some((k: WifiCard) => k.id_k === conn.id_k_2)),
+          targetCard: conn.id_k_2
+        });
+      });
+    });
+  }
+
+  // Zakładki panelu bocznego
+  const [activeTab, setActiveTab] = useState<'all' | 'port' | 'wifi'>('all');
+
+  // Filtrowane połączenia do wyświetlenia
+  let filteredConnections = deviceConnections;
+  if (activeTab === 'port') {
+    filteredConnections = deviceConnections.filter(c => c.type === 'port');
+  } else if (activeTab === 'wifi') {
+    filteredConnections = deviceConnections.filter(c => c.type === 'wifi');
+  }
+
+  const onNodeClick = (_: any, node: any) => {
+    setSelectedDeviceId(node.id);
+  };
+
+  return (
     <div style={{ width: '100vw', height: '80vh', background: '#e3f2fd', position: 'relative' }}>
       <LegendContainer>
         <LegendTitle>Hierarchia sieci</LegendTitle>
@@ -442,6 +589,13 @@ const NetworkMapPage = () => {
         <LegendItem color="#e8f5e8" borderColor="#388e3c">Switch</LegendItem>
         <LegendItem color="#fff8e1" borderColor="#fbc02d">Access Point</LegendItem>
         <LegendItem color="#f5f5f5" borderColor="#616161">PC</LegendItem>
+        <div style={{ margin: '10px 0 0 0', fontWeight: 600, color: '#1976d2' }}>Połączenia:</div>
+        <div style={{ display: 'flex', alignItems: 'center', margin: '6px 0 0 0', fontSize: 13 }}>
+          <LegendLine color="#1976d2" />
+          <span style={{ color: '#1976d2', marginRight: 10 }}>Port</span>
+          <LegendLine color="#fbc02d" dashed />
+          <span style={{ color: '#fbc02d' }}>WiFi</span>
+        </div>
       </LegendContainer>
       
       <ReactFlow
@@ -451,11 +605,49 @@ const NetworkMapPage = () => {
         fitView
         panOnDrag
         zoomOnScroll
+        onNodeClick={onNodeClick}
       >
         <MiniMap />
         <Controls />
         <Background gap={16} color="#b3e5fc" />
       </ReactFlow>
+      {selectedDevice && (
+        <SidePanel>
+          <CloseButton onClick={() => setSelectedDeviceId(null)} title="Zamknij panel">×</CloseButton>
+          <PanelTitle>{selectedDevice.urzadzenie.nazwa_urzadzenia}</PanelTitle>
+          <PanelSection>
+            <PanelLabel>Typ:</PanelLabel>
+            <div>{selectedDevice.typ?.typ_u}</div>
+          </PanelSection>
+          <Tabs>
+            <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>Wszystkie</TabButton>
+            <TabButton active={activeTab === 'port'} onClick={() => setActiveTab('port')}>Porty</TabButton>
+            <TabButton active={activeTab === 'wifi'} onClick={() => setActiveTab('wifi')}>WiFi</TabButton>
+          </Tabs>
+          <PanelSection>
+            <PanelLabel>Połączenia:</PanelLabel>
+            {filteredConnections.length === 0 ? (
+              <PanelNoData>Brak połączeń</PanelNoData>
+            ) : (
+              <PanelList>
+                {filteredConnections.map((conn, idx) => (
+                  <li key={idx}>
+                    {conn.type === 'port' ? (
+                      <>
+                        Port <b>{conn.portName}</b> → {conn.targetDevice?.urzadzenie.nazwa_urzadzenia || 'Nieznane'}
+                      </>
+                    ) : (
+                      <>
+                        WiFi <b>{conn.cardName}</b> → {conn.targetDevice?.urzadzenie.nazwa_urzadzenia || 'Nieznane'}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </PanelList>
+            )}
+          </PanelSection>
+        </SidePanel>
+      )}
     </div>
   );
 };

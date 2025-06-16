@@ -23,13 +23,17 @@ export const WideSidePanelList = styled.ul`
   margin: 0;
 `;
 
+export const WideSidePanelListItem = styled.li`
+  margin-bottom: 4px;
+`;
+
 export const RemoveConnectionButton = styled.button`
   background: #fff;
   color: #d32f2f;
   border: 1.5px solid #d32f2f;
   border-radius: 4px;
   padding: 6px 14px;
-  font-size: 1rem;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   margin-left: 16px;
