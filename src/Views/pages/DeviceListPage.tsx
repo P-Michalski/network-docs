@@ -7,12 +7,12 @@ import type { RootState } from '../../store';
 const PageContainer = styled.div`
   display: flex;
   flex-direction: row;
-  height: 80vh;
+  height: 100vh;
   background: #f7fafd;
 `;
 
 const ListPanel = styled.div`
-  width: 420px;
+  width: 540px;
   border-right: 2px solid #1976d2;
   background: #fff;
   padding: 28px 18px 18px 18px;
@@ -53,6 +53,10 @@ const TabButton = styled.button<{ active?: boolean }>`
   box-shadow: ${({ active }) => (active ? '0 2px 8px #1976d2aa' : 'none')};
   transition: background 0.2s, color 0.2s;
   outline: none;
+  white-space: nowrap; /* zapobiega łamaniu tekstu */
+  max-width: 180px; /* opcjonalnie ogranicz szerokość */
+  text-overflow: ellipsis;
+  overflow: hidden;
 `;
 
 const DetailsPanel = styled.div`
