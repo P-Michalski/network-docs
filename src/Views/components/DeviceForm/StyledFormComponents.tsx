@@ -30,6 +30,8 @@ export const ErrorMsg = styled.span`
   color: #d32f2f;
   font-size: 0.9em;
   margin-top: 2px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 `;
 
 export const Select = styled.select`
@@ -61,9 +63,38 @@ export const WifiCardBox = styled.div`
 
 export const WifiCardInnerRow = styled.div`
   display: flex;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 8px;
+`;
+
+// Specjalne fieldset dla sekcji WiFi, żeby się zmieściły obok siebie
+export const WifiFieldset = styled.fieldset`
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin: 4px;
+  min-width: 120px;
+  flex: 1;
+`;
+
+// Dedykowany komponent dla sekcji Pasmo - węższej
+export const WifiPasmoFieldset = styled.fieldset`
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin: 4px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  flex: none;
+`;
+
+// Dedykowany komponent dla pozostałych sekcji WiFi
+export const WifiStandardFieldset = styled.fieldset`
+  border: 1px solid #ccc;
+  padding: 8px;
+  margin: 4px;
+  min-width: 120px;
+  flex: 1;
 `;
 
 export const SidePanel = styled.aside`

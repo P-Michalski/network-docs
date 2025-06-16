@@ -1,5 +1,6 @@
 import { call, put, takeLatest, select } from 'redux-saga/effects';
 import { fetchDevicesDetails, addDevice, deleteDevice, updateDevice } from '../../api/device';
+import { removeDeviceConnections, restoreDeviceConnections } from './connectionsSaga';
 import {
   fetchDevicesRequest,
   fetchDevicesSuccess,
@@ -13,15 +14,8 @@ import {
   updateDeviceRequest,
   updateDeviceSuccess,
   updateDeviceFailure,
-  addConnectionRequest,
-  addConnectionSuccess,
-  addConnectionFailure,
-  deleteConnectionRequest,
-  deleteConnectionSuccess,
-  deleteConnectionFailure,
 } from '../Slices/devicesSlice';
 // Dodaj importy axios (do połączeń) i ewentualnie store, jeśli potrzebne
-import axios from '../../api/axios';
 
 import type { SagaIterator } from 'redux-saga';
 import type { RootState } from '../../store';
@@ -29,8 +23,18 @@ import type { RootState } from '../../store';
 function* fetchDevicesSaga(): SagaIterator {
   try {
     const devices = yield call(fetchDevicesDetails);
-    const plainDevices = devices.map((d: any) => JSON.parse(JSON.stringify(d)));
-    yield put(fetchDevicesSuccess(plainDevices));
+    console.log('Saga: pobrane urządzenia jako klasy:', devices);
+    
+    // Konwertuj obiekty klasy na plain objects przed przekazaniem do Redux
+    const serializedDevices = devices.map((device: any) => ({
+      ...device,
+      // Upewnij się, że wszystkie nested objects też są serializowalne
+      urzadzenie: { ...device.urzadzenie },
+      porty: device.porty?.map((port: any) => ({ ...port })) || [],
+      karty_wifi: device.karty_wifi?.map((card: any) => ({ ...card })) || [],
+    }));
+    
+    yield put(fetchDevicesSuccess(serializedDevices));
   } catch (error: any) {
     yield put(fetchDevicesFailure(error.message || 'Błąd podczas ładowania urządzeń'));
   }
@@ -83,26 +87,6 @@ function* getDeviceConnectionsForUpdate(deviceId: number) {
   return { port: portConnections, wifi: wifiConnections };
 }
 
-// Pomocnicze: usuń połączenia
-function* removeDeviceConnections(conns: { port: any[]; wifi: any[] }) {
-  for (const c of conns.port) {
-    yield call([axios, axios.delete], '/polaczony_z', { data: { id_p_1: c.id_p_1, id_p_2: c.id_p_2 } });
-  }
-  for (const c of conns.wifi) {
-    yield call([axios, axios.delete], '/polaczona_z', { data: { id_k_1: c.id_k_1, id_k_2: c.id_k_2 } });
-  }
-}
-
-// Pomocnicze: przywróć połączenia
-function* restoreDeviceConnections(conns: { port: any[]; wifi: any[] }) {
-  for (const c of conns.port) {
-    yield call([axios, axios.post], '/polaczony_z', c);
-  }
-  for (const c of conns.wifi) {
-    yield call([axios, axios.post], '/polaczona_z', c);
-  }
-}
-
 // --- PATCH updateDeviceSaga ---
 function* updateDeviceSaga(action: any): SagaIterator {
   let connections;
@@ -131,45 +115,11 @@ function* updateDeviceSaga(action: any): SagaIterator {
   }
 }
 
-// --- SAGA: DODAWANIE POŁĄCZENIA ---
-function* addConnectionSaga(action: any): SagaIterator {
-  try {
-    const { connectionType, payload } = action.payload;
-    if (connectionType === 'port') {
-      yield call([axios, axios.post], '/polaczony_z', payload);
-    } else {
-      yield call([axios, axios.post], '/polaczona_z', payload);
-    }
-    yield put(addConnectionSuccess());
-    yield put(fetchDevicesRequest());
-  } catch (error: any) {
-    yield put(addConnectionFailure(error.message || 'Błąd podczas dodawania połączenia'));
-  }
-}
-
-// --- SAGA: USUWANIE POŁĄCZENIA ---
-function* deleteConnectionSaga(action: any): SagaIterator {
-  try {
-    const { connectionType, payload } = action.payload;
-    if (connectionType === 'port') {
-      yield call([axios, axios.delete], '/polaczony_z', { data: payload });
-    } else {
-      yield call([axios, axios.delete], '/polaczona_z', { data: payload });
-    }
-    yield put(deleteConnectionSuccess());
-    yield put(fetchDevicesRequest());
-  } catch (error: any) {
-    yield put(deleteConnectionFailure(error.message || 'Błąd podczas usuwania połączenia'));
-  }
-}
-
 export default function* devicesSaga() {
   yield takeLatest(fetchDevicesRequest.type, fetchDevicesSaga);
   yield takeLatest(addDeviceRequest.type, addDeviceSaga);
   yield takeLatest(deleteDeviceRequest.type, deleteDeviceSaga);
   yield takeLatest(updateDeviceRequest.type, updateDeviceSaga);
-  yield takeLatest(addConnectionRequest.type, addConnectionSaga);
-  yield takeLatest(deleteConnectionRequest.type, deleteConnectionSaga);
 }
 
 // UWAGA: W przyszłości należy usunąć również połączenia, w których urządzenie uczestniczyło (TODO w backendzie).

@@ -1,10 +1,10 @@
 import api from './axios';
 import type { Device } from '../Models/Device';
-import type { DeviceDetails } from '../Models/DeviceDetails';
+import { DeviceDetails } from '../Models/DeviceDetails.class';
 
 export const fetchDevicesDetails = async (): Promise<DeviceDetails[]> => {
-  const response = await api.get<DeviceDetails[]>('/urzadzenia/all-details');
-  return response.data;
+  const response = await api.get('/urzadzenia/all-details');
+  return response.data.map((item: any) => DeviceDetails.fromApi(item));
 };
 
 export const fetchDevice = async (id: number): Promise<Device> => {
@@ -18,11 +18,11 @@ export const fetchDevices = async (): Promise<Device[]> => {
 };
 
 export const fetchDeviceDetails = async (id: number): Promise<DeviceDetails> => {
-  const response = await api.get<DeviceDetails>(`/urzadzenia/${id}/all`);
-  return response.data;
+  const response = await api.get(`/urzadzenia/${id}/all`);
+  return DeviceDetails.fromApi(response.data);
 };
 
-export const addDevice = async (device: Omit<DeviceDetails, 'urzadzenie' | 'typ' | 'porty' | 'karty_wifi' | 'mac' | 'lokalizacja'> & DeviceDetails): Promise<void> => {
+export const addDevice = async (device: DeviceDetails): Promise<void> => {
   console.log('API: addDevice wywołana');
   console.log('API: device:', device);
   console.log('API: JSON.stringify(device):', JSON.stringify(device, null, 2));

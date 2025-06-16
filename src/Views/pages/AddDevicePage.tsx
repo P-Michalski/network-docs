@@ -1,55 +1,44 @@
-import { useEffect, useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSelector, useDispatch } from 'react-redux';
-import { deviceDetailsSchema, type DeviceDetailsForm, defaultFormValues } from './formSchemas/addDeviceFormSchema';
-import type { RootState } from '../../store';
-import { fetchDevicesRequest, deleteDeviceRequest, updateDeviceRequest } from '../../Update/Slices/devicesSlice';
-import { FormField, Label, Input, ErrorMsg, Select, Fieldset, MainContainer, DeviceForm, WifiCardBox, WifiCardInnerRow, SidePanel, DeviceListItem, EditButton, DeleteButton, CancelEditButton, SidePanelHeader, SidePanelList, Button, AddButton, RemoveButton, Legend, DeviceTypeSpan } from '../components/DeviceForm/StyledFormComponents';
+import { useDevices } from '../../hooks/useDevices';
+import { useFormSync } from '../../hooks/useFormSync';
+import { createDeviceDetailsSchema, type DeviceDetailsForm, defaultFormValues } from './formSchemas/addDeviceFormSchema';
+import { FormField, Label, Input, ErrorMsg, Select, Fieldset, MainContainer, DeviceForm, WifiCardBox, WifiCardInnerRow, WifiPasmoFieldset, WifiStandardFieldset, SidePanel, DeviceListItem, EditButton, DeleteButton, CancelEditButton, SidePanelHeader, SidePanelList, Button, AddButton, RemoveButton, Legend, DeviceTypeSpan } from '../components/DeviceForm/StyledFormComponents';
+import { DeviceDetails } from '../../Models/DeviceDetails.class';
 
 
 const AddDevicePage = () => {
-  const dispatch = useDispatch();
-  const deviceList = useSelector((state: RootState) => state.devices.devices);
+  const { devices: deviceList, addDevice, updateDevice, deleteDevice } = useDevices();
   const [editingDevice, setEditingDevice] = useState<any | null>(null);
-  const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm<DeviceDetailsForm>({
-    resolver: zodResolver(deviceDetailsSchema),
+  
+  // Tworzenie dynamicznego schematu z walidacją unikalności MAC
+  const schema = useMemo(() => 
+    createDeviceDetailsSchema(deviceList, editingDevice?.urzadzenie?.id_u), 
+    [deviceList, editingDevice?.urzadzenie?.id_u]
+  );
+  
+  const form = useForm<DeviceDetailsForm>({
+    resolver: zodResolver(schema),
     defaultValues: defaultFormValues,
   });
-  const { fields: portFields, append: appendPort, remove: removePort } = useFieldArray({ control, name: 'porty' });
-  const { fields: wifiFields, append: appendWifi, remove: removeWifi } = useFieldArray({ control, name: 'karty_wifi' });
-
-  // Fetch all devices for the side panel
+  const { register, handleSubmit, reset, watch, formState: { errors } } = form;
+  
+  // Aktualizuj resolver gdy zmieni się schemat
   useEffect(() => {
-    dispatch(fetchDevicesRequest());
-  }, [dispatch]);
-
-  // Synchronize port count <-> port fields
-  const ilosc_portow = watch('urzadzenie.ilosc_portow');
-  useEffect(() => {
-    if (typeof ilosc_portow === 'number' && ilosc_portow > 0) {
-      const diff = ilosc_portow - portFields.length;
-      if (diff > 0) {
-        // Add missing ports
-        for (let i = 0; i < diff; i++) {
-          appendPort({ nazwa: '', status: '', polaczenia_portu: [] });
-        }
-      } else if (diff < 0) {
-        // Remove extra ports
-        for (let i = 0; i < -diff; i++) {
-          removePort(portFields.length - 1 - i);
-        }
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ilosc_portow]);
-
-  // When ports are added/removed, update ilosc_portow
-  useEffect(() => {
-    setValue('urzadzenie.ilosc_portow', portFields.length as any, { shouldValidate: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [portFields.length]);
-
+    form.control._options.resolver = zodResolver(schema);
+  }, [schema, form.control]);
+  
+  // Get the current values for default values
+  const currentWifiValues = watch('karty_wifi') || [];
+    // Użyj hooków do synchronizacji pól
+  const { fields: portFields, append: appendPort, remove: removePort } = useFormSync(form, 'urzadzenie.ilosc_portow', 'porty', { 
+    nazwa: '', 
+    status: '',    typ: '' as any,
+    predkosc_portu: { predkosc: '1Gb/s' as const },
+    polaczenia_portu: [] 
+  });
+  const { fields: wifiFields, append: appendWifi, remove: removeWifi } = useFieldArray({ control: form.control, name: 'karty_wifi' });
   // After adding a device, reload the list
   const onSubmit = (data: DeviceDetailsForm) => {
     try {      
@@ -79,14 +68,14 @@ const AddDevicePage = () => {
       console.log('mappedData.urzadzenie.ilosc_portow type:', typeof mappedData.urzadzenie.ilosc_portow);
       console.log('mappedData.urzadzenie.ilosc_portow value:', mappedData.urzadzenie.ilosc_portow);
       console.log('========================');
-      
       if (editingDevice) {
-        dispatch(updateDeviceRequest({ id_u: editingDevice.urzadzenie.id_u, device: mappedData }));
+        const deviceInstance = DeviceDetails.fromApi(mappedData);
+        updateDevice(editingDevice.urzadzenie.id_u, deviceInstance);
         setEditingDevice(null);
         reset(defaultFormValues); // czyść do domyślnych wartości
       } else {
         console.log('Dodaję nowe urządzenie...');
-        dispatch({ type: 'devices/addDeviceRequest', payload: mappedData });
+        addDevice(mappedData);
         reset(defaultFormValues);
       }
     } catch (err) {
@@ -94,20 +83,19 @@ const AddDevicePage = () => {
       alert('Błąd podczas zapisu urządzenia');
     }
   };
-
   const handleEdit = (dev: any) => {
     // Upewnij się, że zawsze są wartości domyślne dla nazwa_urzadzenia i ilosc_portow
     setEditingDevice(dev);
     reset({
-      ...dev,
-      urzadzenie: {
+      ...dev,      urzadzenie: {
         ...dev.urzadzenie,
         nazwa_urzadzenia: dev.urzadzenie?.nazwa_urzadzenia ?? '',
         ilosc_portow: dev.urzadzenie?.ilosc_portow ?? dev.porty?.length ?? 1,
-      },
-      porty: (dev.porty || [{ nazwa: '', status: '', polaczenia_portu: [] }]).map((p: any) => ({
+      },      porty: (dev.porty || [{ nazwa: '', status: '', typ: '', predkosc_portu: { predkosc: '' }, polaczenia_portu: [] }]).map((p: any) => ({
         ...p,
         status: p.status || '',
+        typ: p.typ || '',
+        predkosc_portu: p.predkosc_portu || { predkosc: '' },
         polaczenia_portu: p.polaczenia_portu || [],
       })),
       karty_wifi: (dev.karty_wifi || [defaultFormValues.karty_wifi[0]]).map((k: any) => ({
@@ -115,16 +103,13 @@ const AddDevicePage = () => {
         pasmo: {
           pasmo24GHz: typeof k.pasmo?.pasmo24GHz === 'number' ? k.pasmo.pasmo24GHz : Number(k.pasmo?.pasmo24GHz) || 0,
           pasmo5GHz: typeof k.pasmo?.pasmo5GHz === 'number' ? k.pasmo.pasmo5GHz : Number(k.pasmo?.pasmo5GHz) || 0,
+          pasmo6GHz: typeof k.pasmo?.pasmo6GHz === 'number' ? k.pasmo.pasmo6GHz : Number(k.pasmo?.pasmo6GHz) || 0,
         },
         wersja: {
-          WIFI4: typeof k.wersja?.WIFI4 === 'number' ? k.wersja.WIFI4 : Number(k.wersja?.WIFI4) || 0,
-          WIFI5: typeof k.wersja?.WIFI5 === 'number' ? k.wersja.WIFI5 : Number(k.wersja?.WIFI5) || 0,
-          WIFI6: typeof k.wersja?.WIFI6 === 'number' ? k.wersja.WIFI6 : Number(k.wersja?.WIFI6) || 0,
+          wersja: k.wersja?.wersja || 'N',
         },
         predkosc: {
-          '200Mb': typeof k.predkosc?.['200Mb'] === 'number' ? k.predkosc['200Mb'] : Number(k.predkosc?.['200Mb']) || 0,
-          '800Mb': typeof k.predkosc?.['800Mb'] === 'number' ? k.predkosc['800Mb'] : Number(k.predkosc?.['800Mb']) || 0,
-          '2Gb': typeof k.predkosc?.['2Gb'] === 'number' ? k.predkosc['2Gb'] : Number(k.predkosc?.['2Gb']) || 0,
+          predkosc: typeof k.predkosc?.predkosc === 'number' ? k.predkosc.predkosc : Number(k.predkosc?.predkosc) || 100,
         },
       })),
       typ: { typ_u: dev.typ?.typ_u || '' },
@@ -148,8 +133,7 @@ const AddDevicePage = () => {
           </div>
         )}
         <Fieldset>
-          <Legend>Podstawowe dane</Legend>
-          <FormField>
+          <Legend>Podstawowe dane</Legend>          <FormField>
             <Label htmlFor="nazwa_urzadzenia">Nazwa urządzenia:</Label>
             <Input id="nazwa_urzadzenia" {...register('urzadzenie.nazwa_urzadzenia')} />
             {errors.urzadzenie?.nazwa_urzadzenia && <ErrorMsg>{errors.urzadzenie.nazwa_urzadzenia.message}</ErrorMsg>}
@@ -172,153 +156,148 @@ const AddDevicePage = () => {
             </Select>
             {errors.typ?.typ_u && <ErrorMsg>{errors.typ.typ_u.message}</ErrorMsg>}
           </FormField>
-        </Fieldset>
-        <Fieldset>
+        </Fieldset>        <Fieldset>
           <Legend>Lokalizacja</Legend>
           <FormField>
             <Input {...register('lokalizacja.miejsce')} placeholder="Miejsce" />
+            {errors.lokalizacja?.miejsce && <ErrorMsg>{errors.lokalizacja.miejsce.message}</ErrorMsg>}
           </FormField>
           <FormField>
             <Input {...register('lokalizacja.szafa')} placeholder="Szafa" />
+            {errors.lokalizacja?.szafa && <ErrorMsg>{errors.lokalizacja.szafa.message}</ErrorMsg>}
           </FormField>
           <FormField>
             <Input {...register('lokalizacja.rack')} placeholder="Rack" />
+            {errors.lokalizacja?.rack && <ErrorMsg>{errors.lokalizacja.rack.message}</ErrorMsg>}
           </FormField>
-        </Fieldset>
-        <Fieldset>
+        </Fieldset>        <Fieldset>
           <Legend>MAC</Legend>
           <FormField>
             <Input {...register('mac.MAC')} placeholder="MAC" />
+            {errors.mac?.MAC && <ErrorMsg>{errors.mac.MAC.message}</ErrorMsg>}
           </FormField>
         </Fieldset>
         <Fieldset>
-          <Legend>Porty</Legend>
-          {portFields.map((field, idx) => (
+          <Legend>Porty</Legend>          {portFields.map((field, idx) => (
             <FormField key={field.id}>
               <Input {...register(`porty.${idx}.nazwa`)} placeholder="Nazwa portu" />
+              {errors.porty?.[idx]?.nazwa && <ErrorMsg>{errors.porty[idx]?.nazwa?.message}</ErrorMsg>}
+              
               <Select {...register(`porty.${idx}.status`)}>
                 <option value="">Wybierz status...</option>
                 <option value="aktywny">Aktywny</option>
                 <option value="nieaktywny">Nieaktywny</option>
               </Select>
+              {errors.porty?.[idx]?.status && <ErrorMsg>{errors.porty[idx]?.status?.message}</ErrorMsg>}
+              
+              <Select {...register(`porty.${idx}.typ`)}>
+                <option value="">Wybierz typ...</option>
+                <option value="RJ45">RJ45</option>
+                <option value="SFP">SFP</option>
+              </Select>
+              {errors.porty?.[idx]?.typ && <ErrorMsg>{errors.porty[idx]?.typ?.message}</ErrorMsg>}
+              
+              <Select {...register(`porty.${idx}.predkosc_portu.predkosc`)}>
+                <option value="">Wybierz prędkość...</option>
+                <option value="10Mb/s">10Mb/s</option>
+                <option value="100Mb/s">100Mb/s</option>
+                <option value="1Gb/s">1Gb/s</option>
+                <option value="2,5Gb/s">2,5Gb/s</option>
+                <option value="5Gb/s">5Gb/s</option>
+                <option value="10Gb/s">10Gb/s</option>
+                <option value="25Gb/s">25Gb/s</option>
+              </Select>
+              {errors.porty?.[idx]?.predkosc_portu?.predkosc && <ErrorMsg>{errors.porty[idx]?.predkosc_portu?.predkosc?.message}</ErrorMsg>}
+              
               <RemoveButton type="button" onClick={() => removePort(idx)}>Usuń port</RemoveButton>
             </FormField>
-          ))}
-          <AddButton type="button" onClick={() => appendPort({ nazwa: '', status: '', polaczenia_portu: [] })}>Dodaj port</AddButton>
+          ))}          <AddButton type="button" onClick={() => appendPort({ 
+            nazwa: '', 
+            status: '', 
+            typ: '' as any,
+            predkosc_portu: { predkosc: '' as any },
+            polaczenia_portu: [] 
+          })}>Dodaj port</AddButton>
         </Fieldset>
         <Fieldset>
           <Legend>Karty WiFi</Legend>
           {wifiFields.map((field, idx) => (
-            <WifiCardBox key={field.id}>
-              <FormField>
+            <WifiCardBox key={field.id}>              <FormField>
                 <Label>Nazwa karty:</Label>
                 <Input {...register(`karty_wifi.${idx}.nazwa`)} placeholder="Nazwa karty WiFi" />
+                {errors.karty_wifi?.[idx]?.nazwa && <ErrorMsg>{errors.karty_wifi[idx]?.nazwa?.message}</ErrorMsg>}
                 <Label>Status:</Label>
                 <Select {...register(`karty_wifi.${idx}.status`)}>
                   <option value="">Wybierz status...</option>
                   <option value="aktywny">Aktywny</option>
                   <option value="nieaktywny">Nieaktywny</option>
                 </Select>
+                {errors.karty_wifi?.[idx]?.status && <ErrorMsg>{errors.karty_wifi[idx]?.status?.message}</ErrorMsg>}
               </FormField>
-              <WifiCardInnerRow>
-                <Fieldset>
+              <WifiCardInnerRow>                <WifiPasmoFieldset>
                   <Legend>Pasmo</Legend>
                   <FormField>
                     <Label>2.4GHz:</Label>
                     <Select
                       {...register(`karty_wifi.${idx}.pasmo.pasmo24GHz`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.pasmo?.pasmo24GHz === 1 ? '1' : '0'}
+                      defaultValue={currentWifiValues[idx]?.pasmo?.pasmo24GHz === 1 ? '1' : '0'}
                     >
                       <option value="1">Tak</option>
                       <option value="0">Nie</option>
                     </Select>
-                  </FormField>
-                  <FormField>
+                  </FormField>                  <FormField>
                     <Label>5GHz:</Label>
                     <Select
                       {...register(`karty_wifi.${idx}.pasmo.pasmo5GHz`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.pasmo?.pasmo5GHz === 1 ? '1' : '0'}
+                      defaultValue={currentWifiValues[idx]?.pasmo?.pasmo5GHz === 1 ? '1' : '0'}
                     >
                       <option value="1">Tak</option>
                       <option value="0">Nie</option>
                     </Select>
                   </FormField>
-                </Fieldset>
-                <Fieldset>
+                  <FormField>
+                    <Label>6GHz:</Label>
+                    <Select
+                      {...register(`karty_wifi.${idx}.pasmo.pasmo6GHz`, { setValueAs: v => Number(v) })}
+                      defaultValue={currentWifiValues[idx]?.pasmo?.pasmo6GHz === 1 ? '1' : '0'}
+                    >
+                      <option value="1">Tak</option>
+                      <option value="0">Nie</option>
+                    </Select>
+                  </FormField>                  {errors.karty_wifi?.[idx]?.pasmo && <ErrorMsg>{errors.karty_wifi[idx]?.pasmo?.message}</ErrorMsg>}
+                </WifiPasmoFieldset>                <WifiStandardFieldset>
                   <Legend>Wersja WiFi</Legend>
                   <FormField>
-                    <Label>WIFI4:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.wersja.WIFI4`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.wersja?.WIFI4 === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
+                    <Label>Wersja:</Label>                    <Select {...register(`karty_wifi.${idx}.wersja.wersja`)}>
+                      <option value="">Wybierz wersję...</option>
+                      <option value="B">B</option>
+                      <option value="G">G</option>
+                      <option value="N">N</option>
+                      <option value="AC">AC</option>
+                      <option value="AX">AX</option>
+                      <option value="BE">BE</option>
                     </Select>
-                  </FormField>
-                  <FormField>
-                    <Label>WIFI5:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.wersja.WIFI5`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.wersja?.WIFI5 === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
-                    </Select>
-                  </FormField>
-                  <FormField>
-                    <Label>WIFI6:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.wersja.WIFI6`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.wersja?.WIFI6 === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
-                    </Select>
-                  </FormField>
-                </Fieldset>
-                <Fieldset>
+                  </FormField>                  {errors.karty_wifi?.[idx]?.wersja?.wersja && <ErrorMsg>{errors.karty_wifi[idx]?.wersja?.wersja?.message}</ErrorMsg>}
+                </WifiStandardFieldset>                <WifiStandardFieldset>
                   <Legend>Prędkość</Legend>
                   <FormField>
-                    <Label>200Mb:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.predkosc.200Mb`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.predkosc?.['200Mb'] === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
-                    </Select>
-                  </FormField>
-                  <FormField>
-                    <Label>800Mb:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.predkosc.800Mb`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.predkosc?.['800Mb'] === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
-                    </Select>
-                  </FormField>
-                  <FormField>
-                    <Label>2Gb:</Label>
-                    <Select
-                      {...register(`karty_wifi.${idx}.predkosc.2Gb`, { setValueAs: v => Number(v) })}
-                      defaultValue={wifiFields[idx]?.predkosc?.['2Gb'] === 1 ? '1' : '0'}
-                    >
-                      <option value="1">Tak</option>
-                      <option value="0">Nie</option>
-                    </Select>
-                  </FormField>
-                </Fieldset>
+                    <Label>Prędkość (Mb/s):</Label>
+                    <Input 
+                      type="number" 
+                      placeholder="Prędkość w Mb/s"
+                      {...register(`karty_wifi.${idx}.predkosc.predkosc`, { setValueAs: v => Number(v) })}
+                    />
+                  </FormField>                  {errors.karty_wifi?.[idx]?.predkosc?.predkosc && <ErrorMsg>{errors.karty_wifi[idx]?.predkosc?.predkosc?.message}</ErrorMsg>}
+                </WifiStandardFieldset>
               </WifiCardInnerRow>
               <RemoveButton type="button" onClick={() => removeWifi(idx)}>Usuń kartę WiFi</RemoveButton>
             </WifiCardBox>
-          ))}
-          <AddButton type="button" onClick={() => appendWifi({
-            nazwa: '', status: '',
-            pasmo: { pasmo24GHz: 0, pasmo5GHz: 0 },
-            wersja: { WIFI4: 0, WIFI5: 0, WIFI6: 0 },
-            predkosc: { '200Mb': 0, '800Mb': 0, '2Gb': 0 },
+          ))}          <AddButton type="button" onClick={() => appendWifi({
+            nazwa: '', 
+            status: '',
+            pasmo: { pasmo24GHz: 0, pasmo5GHz: 0, pasmo6GHz: 0 },
+            wersja: { wersja: '' as any },
+            predkosc: { predkosc: 0 },
           })}>Dodaj kartę WiFi</AddButton>
         </Fieldset>
         <Button type="submit" disabled={!!(editingDevice && hasConnections)}>{editingDevice ? 'Zapisz zmiany' : 'Dodaj urządzenie'}</Button>
@@ -340,10 +319,9 @@ const AddDevicePage = () => {
                   {deviceName} <DeviceTypeSpan>{deviceType}</DeviceTypeSpan>
                 </span>
                 <span>
-                  <EditButton type="button" onClick={() => handleEdit(dev)}>Edit</EditButton>
-                  <DeleteButton type="button" onClick={() => {
+                  <EditButton type="button" onClick={() => handleEdit(dev)}>Edit</EditButton>                  <DeleteButton type="button" onClick={() => {
                     if (window.confirm('Czy na pewno chcesz usunąć to urządzenie?')) {
-                      dispatch(deleteDeviceRequest(dev.urzadzenie?.id_u));
+                      deleteDevice(dev.urzadzenie?.id_u);
                     }
                   }}>Usuń</DeleteButton>
                 </span>

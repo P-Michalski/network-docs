@@ -1,122 +1,25 @@
-import { useEffect, useState } from 'react';
-import { fetchDevicesRequest } from '../../Update/Slices/devicesSlice';
-import styled from 'styled-components';
-import { useDispatch, useSelector } from 'react-redux';
-import type { RootState } from '../../store';
-
-const PageContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  height: 100vh;
-  background: #f7fafd;
-`;
-
-const ListPanel = styled.div`
-  width: 540px;
-  border-right: 2px solid #1976d2;
-  background: #fff;
-  padding: 28px 18px 18px 18px;
-  overflow-y: auto;
-`;
-
-const DeviceItem = styled.div<{ selected?: boolean }>`
-  border: 2px solid ${({ selected }) => (selected ? '#1976d2' : '#e3e3e3')};
-  border-radius: 12px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  background: ${({ selected }) => (selected ? '#e3f2fd' : '#fafcff')};
-  cursor: pointer;
-  box-shadow: ${({ selected }) => (selected ? '0 2px 8px #1976d2aa' : '0 1px 4px #0001')};
-  transition: border 0.2s, background 0.2s;
-  font-size: 16px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const Tabs = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-`;
-
-const TabButton = styled.button<{ active?: boolean }>`
-  padding: 7px 18px;
-  border: none;
-  border-radius: 16px 16px 0 0;
-  background: ${({ active }) => (active ? '#1976d2' : '#e3f2fd')};
-  color: ${({ active }) => (active ? '#fff' : '#1976d2')};
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  box-shadow: ${({ active }) => (active ? '0 2px 8px #1976d2aa' : 'none')};
-  transition: background 0.2s, color 0.2s;
-  outline: none;
-  white-space: nowrap; /* zapobiega łamaniu tekstu */
-  max-width: 180px; /* opcjonalnie ogranicz szerokość */
-  text-overflow: ellipsis;
-  overflow: hidden;
-`;
-
-const DetailsPanel = styled.div`
-  flex: 1;
-  padding: 36px 32px 32px 32px;
-  background: #f7fafd;
-  overflow-y: auto;
-`;
-
-const DetailsTitle = styled.div`
-  font-size: 22px;
-  font-weight: bold;
-  color: #1976d2;
-  margin-bottom: 12px;
-`;
-
-const DetailsSection = styled.div`
-  margin-bottom: 18px;
-`;
-
-const DetailsLabel = styled.div`
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
-`;
-
-const DetailsValue = styled.div`
-  color: #444;
-  font-size: 15px;
-  margin-bottom: 2px;
-`;
+import { useState } from 'react';
+import { useDevices } from '../../hooks/useDevices';
+import { useDeviceFiltering } from '../../hooks/useDeviceFiltering';
+import { PageContainer, ListPanel, DeviceItem, Tabs, TabButton, DetailsPanel, DetailsLabel, DetailsSection, DetailsTitle, DetailsValue} from '../components/DeviceListPage/StyledDeviceListPageComponents';
 
 const DeviceListPage = () => {
-  const dispatch = useDispatch();
-  const devices = useSelector((state: RootState) => state.devices.devices);
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const { devices } = useDevices();
+  const { activeTab, setActiveTab, deviceTypes, filteredDevices, getTabLabel } = useDeviceFiltering(devices);
   const [selectedDeviceId, setSelectedDeviceId] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!devices || devices.length === 0) {
-      dispatch(fetchDevicesRequest());
-    }
-  }, [devices, dispatch]);
-
-  // Typy urządzeń do zakładek
-  const deviceTypes = Array.from(new Set(devices.map(d => d.typ?.typ_u).filter(Boolean)));
-  const filteredDevices = selectedType === 'all'
-    ? devices
-    : devices.filter(d => d.typ?.typ_u === selectedType);
+  
   const selectedDevice = devices.find(d => d.urzadzenie.id_u === selectedDeviceId);
-
   return (
     <PageContainer>
       <ListPanel>
         <h2 style={{ color: '#1976d2', marginBottom: 18 }}>Lista urządzeń</h2>
         <Tabs>
-          <TabButton active={selectedType === 'all'} onClick={() => setSelectedType('all')}>Wszystkie</TabButton>
+          <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')}>
+            {getTabLabel('all')}
+          </TabButton>
           {deviceTypes.map(type => (
-            <TabButton key={type} active={selectedType === type} onClick={() => setSelectedType(type)}>
-              {type}
+            <TabButton key={type} active={activeTab === type} onClick={() => setActiveTab(type)}>
+              {getTabLabel(type)}
             </TabButton>
           ))}
         </Tabs>
@@ -159,7 +62,17 @@ const DeviceListPage = () => {
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {selectedDevice.porty.map(port => (
                     <li key={port.id_p}>
-                      <b>{port.nazwa}</b> (Status: {port.status})
+                      <b>{port.nazwa}</b>
+                      <br />
+                      <small>
+                        Status: {port.status}
+                        <br />
+                        Typ: {port.typ || 'Brak danych'}
+                        <br />
+                        Prędkość: {port.predkosc_portu?.predkosc || 'Brak danych'}
+                        <br />
+                        Połączenia: {port.polaczenia_portu?.length || 0}
+                      </small>
                     </li>
                   ))}
                 </ul>
@@ -172,14 +85,18 @@ const DeviceListPage = () => {
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {selectedDevice.karty_wifi.map(card => (
                     <li key={card.id_k}>
-                      <b>{card.nazwa}</b> (Status: {card.status})
+                      <b>{card.nazwa}</b>
                       <br />
                       <small>
-                        Pasma: 2.4GHz: {card.pasmo?.pasmo24GHz ? 'Tak' : 'Nie'}, 5GHz: {card.pasmo?.pasmo5GHz ? 'Tak' : 'Nie'}
+                        Status: {card.status}
                         <br />
-                        WiFi: 4: {card.wersja?.WIFI4 ? 'Tak' : 'Nie'}, 5: {card.wersja?.WIFI5 ? 'Tak' : 'Nie'}, 6: {card.wersja?.WIFI6 ? 'Tak' : 'Nie'}
+                        Pasma: 2.4GHz: {card.pasmo?.pasmo24GHz ? 'Tak' : 'Nie'}, 5GHz: {card.pasmo?.pasmo5GHz ? 'Tak' : 'Nie'}, 6GHz: {card.pasmo?.pasmo6GHz ? 'Tak' : 'Nie'}
                         <br />
-                        Prędkości: 200Mb: {card.predkosc?.["200Mb"] ? 'Tak' : 'Nie'}, 800Mb: {card.predkosc?.["800Mb"] ? 'Tak' : 'Nie'}, 2Gb: {card.predkosc?.["2Gb"] ? 'Tak' : 'Nie'}
+                        Wersja WiFi: {card.wersja?.wersja || 'Brak danych'}
+                        <br />
+                        Prędkość: {card.predkosc?.predkosc ? `${card.predkosc.predkosc}Mb/s` : 'Brak danych'}
+                        <br />
+                        Połączenia: {card.polaczenia_karty?.length || 0}
                       </small>
                     </li>
                   ))}

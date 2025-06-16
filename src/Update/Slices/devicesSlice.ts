@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { DeviceDetails } from '../../Models/DeviceDetails.class';
+import type { DeviceDetails } from '../../Models/DeviceDetails';
+
+// Typ dla serializowalnych danych urządzenia
 
 interface DevicesState {
   devices: DeviceDetails[];
@@ -21,9 +23,8 @@ const devicesSlice = createSlice({
     fetchDevicesRequest(state) {
       state.loading = true;
       state.error = null;
-    },
-    fetchDevicesSuccess(state, action: PayloadAction<any[]>) {
-      state.devices = action.payload; // plain objects only
+    },    fetchDevicesSuccess(state, action: PayloadAction<DeviceDetails[]>) {
+      state.devices = action.payload;
       state.loading = false;
     },
     fetchDevicesFailure(state, action: PayloadAction<string>) {
@@ -58,31 +59,7 @@ const devicesSlice = createSlice({
     },
     updateDeviceSuccess(state) {
       state.loading = false;
-    },
-    updateDeviceFailure(state, action: PayloadAction<string>) {
-      state.loading = false;
-      state.error = action.payload;
-    },
-    // --- CONNECTIONS ---
-    addConnectionRequest(state, _action: PayloadAction<any>) {
-      state.loading = true;
-      state.error = null;
-    },
-    addConnectionSuccess(state) {
-      state.loading = false;
-    },
-    addConnectionFailure(state, action: PayloadAction<string>) {
-      state.loading = false;
-      state.error = action.payload;
-    },
-    deleteConnectionRequest(state, _action: PayloadAction<any>) {
-      state.loading = true;
-      state.error = null;
-    },
-    deleteConnectionSuccess(state) {
-      state.loading = false;
-    },
-    deleteConnectionFailure(state, action: PayloadAction<string>) {
+    },    updateDeviceFailure(state, action: PayloadAction<string>) {
       state.loading = false;
       state.error = action.payload;
     },
@@ -102,12 +79,6 @@ export const {
   updateDeviceRequest,
   updateDeviceSuccess,
   updateDeviceFailure,
-  addConnectionRequest,
-  addConnectionSuccess,
-  addConnectionFailure,
-  deleteConnectionRequest,
-  deleteConnectionSuccess,
-  deleteConnectionFailure,
 } = devicesSlice.actions;
 
 export const devicesReducer = devicesSlice.reducer;
