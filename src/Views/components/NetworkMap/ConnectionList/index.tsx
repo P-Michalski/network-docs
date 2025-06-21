@@ -24,11 +24,11 @@ export const ConnectionList = ({ connections }: ConnectionListProps) => {
         <ConnectionItem key={idx}>
           {conn.type === 'port' ? (
             <>
-              Port <ConnectionHighlight>{conn.sourcePort}</ConnectionHighlight> → {conn.targetDevice} (Port {conn.targetPort})
+              Port <ConnectionHighlight>{conn.sourcePort}</ConnectionHighlight> → {conn.targetDevice} (Port <ConnectionHighlight>{conn.targetPort})</ConnectionHighlight>
             </>
           ) : (
             <>
-              WiFi <ConnectionHighlight>{conn.sourceCard}</ConnectionHighlight> → {conn.targetDevice} ({conn.targetCard})
+              WiFi <ConnectionHighlight>{conn.sourceCard}</ConnectionHighlight> → {conn.targetDevice} (<ConnectionHighlight>{conn.targetCard})</ConnectionHighlight>
             </>
           )}
         </ConnectionItem>

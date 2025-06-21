@@ -1,8 +1,8 @@
 import styled from 'styled-components';
 
 export const SidePanel = styled.aside`
-  min-width: 320px;
-  max-width: 400px;
+  min-width: 380px;
+  max-width: 600px;
   background: #fafbfc;
   border: 1px solid #eee;
   border-radius: 8px;
