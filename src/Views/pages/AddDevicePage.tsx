@@ -3,8 +3,8 @@ import { useDevices } from '../../hooks/useDevices';
 import { type DeviceDetailsForm } from './formSchemas/addDeviceFormSchema';
 import { MainContainer } from '../components/DeviceForm/styled';
 import { DeviceDetails } from '../../Models/Classes/DeviceDetails.class';
-import LoadingComponent from '../components/Loading/LoadingComponent';
-import DatabaseErrorComponent from '../components/Error/DatabaseErrorComponent';
+import LoadingComponent from '../components/Loading';
+import DatabaseErrorComponent from '../components/Error';
 import { SidePanel } from '../components/DeviceForm/SidePanel';
 import { DeviceForm } from '../components/DeviceForm';
 

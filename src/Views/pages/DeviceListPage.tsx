@@ -4,8 +4,8 @@ import { useDeviceFiltering } from '../../hooks/useDeviceFiltering';
 import { PageContainer } from '../components/DeviceListPage/styled';
 import { DeviceListPanel } from '../components/DeviceListPage/DeviceListPanel';
 import { DeviceDetailsPanel } from '../components/DeviceListPage/DeviceDetailsPanel';
-import LoadingComponent from '../components/Loading/LoadingComponent';
-import DatabaseErrorComponent from '../components/Error/DatabaseErrorComponent';
+import LoadingComponent from '../components/Loading';
+import DatabaseErrorComponent from '../components/Error';
 
 const DeviceListPage = () => {
   const { devices, loading, error, fetchDevices } = useDevices();

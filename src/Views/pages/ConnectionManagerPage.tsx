@@ -7,8 +7,8 @@ import { ConnectionInfo } from '../components/ConnectionForm/ConnectionInfo';
 import { ConnectionsList } from '../components/ConnectionForm/ConnectionsList';
 import { ConnectionInfoModal } from '../components/ConnectionForm/ConnectionInfoModal';
 import { FormMessages } from '../components/ConnectionForm/FormMessages';
-import LoadingComponent from '../components/Loading/LoadingComponent';
-import DatabaseErrorComponent from '../components/Error/DatabaseErrorComponent';
+import LoadingComponent from '../components/Loading';
+import DatabaseErrorComponent from '../components/Error';
 
 const ConnectionManagerPage = () => {
   // Stan loading/error z devicesSlice

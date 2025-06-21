@@ -7,8 +7,8 @@ import { DeviceNode } from '../components/NetworkMap/DeviceNode';
 import { NetworkLegend } from '../components/NetworkMap/NetworkLegend';
 import { DeviceInfoPanel } from '../components/NetworkMap/DeviceInfoPanel';
 import { NetworkMapContainer } from '../components/NetworkMap/StyledNetworkMapComponents';
-import LoadingComponent from '../components/Loading/LoadingComponent';
-import DatabaseErrorComponent from '../components/Error/DatabaseErrorComponent';
+import LoadingComponent from '../components/Loading';
+import DatabaseErrorComponent from '../components/Error';
 
 const NetworkMapPage = () => {
   const { devices, loading, error, fetchDevices } = useDevices();
