@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormSync } from '../../../hooks/useFormSync';
-import { createDeviceDetailsSchema, type DeviceDetailsForm, defaultFormValues, getCompatibleBands, getMinPortsForDeviceType } from '../../pages/formSchemas/addDeviceFormSchema';
+import { createDeviceDetailsSchema, type DeviceDetailsForm, defaultFormValues, getMinPortsForDeviceType } from '../../pages/formSchemas/addDeviceFormSchema';
 import { Input, ErrorMsg, Select, DeviceForm as StyledDeviceForm, CancelEditButton, Button, AddButton, ConnectionWarning } from './styled';
 import { WifiCardBox } from './WifiCardBox';
 import { PortItem } from './PortItem';
@@ -76,29 +76,8 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
         wersja: { wersja: '' as any },
         predkosc: { predkosc: 0 },
       });
-    }
-  }, [currentDeviceType, wifiFields.length, removeWifi, appendWifi]);
+    }  }, [currentDeviceType, wifiFields.length, removeWifi, appendWifi]);
 
-  // Automatycznie ustaw nieobsługiwane pasma na "Nie" przy zmianie wersji WiFi
-  useEffect(() => {
-    wifiFields.forEach((_, idx) => {
-      const currentWifiVersion = watch(`karty_wifi.${idx}.wersja.wersja`);
-      if (currentWifiVersion) {
-        const compatibleBands = getCompatibleBands(currentWifiVersion);
-        
-        // Ustaw nieobsługiwane pasma na "Nie" (0)
-        if (!compatibleBands.pasmo24GHz) {
-          form.setValue(`karty_wifi.${idx}.pasmo.pasmo24GHz`, 0);
-        }
-        if (!compatibleBands.pasmo5GHz) {
-          form.setValue(`karty_wifi.${idx}.pasmo.pasmo5GHz`, 0);
-        }
-        if (!compatibleBands.pasmo6GHz) {
-          form.setValue(`karty_wifi.${idx}.pasmo.pasmo6GHz`, 0);
-        }
-      }
-    });
-  }, [wifiFields.map((_, idx) => watch(`karty_wifi.${idx}.wersja.wersja`)), form, wifiFields]);
   // Ustaw wartości formularza przy edycji lub wyczyść po dodaniu
   useEffect(() => {
     if (editingDevice) {

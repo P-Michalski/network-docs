@@ -1,4 +1,5 @@
 import type { UseFormReturn } from 'react-hook-form';
+import { useEffect } from 'react';
 import {
   WifiCardBox as StyledWifiCardBox,
   WifiCardInnerRow,
@@ -31,13 +32,29 @@ export const WifiCardBox: React.FC<WifiCardBoxProps> = ({
   form,
   onRemove
 }) => {
-  const { register, formState: { errors }, watch } = form;
+  const { register, formState: { errors }, watch, setValue } = form;
   
   // Logika przeniesiona z AddDevicePage:
   const currentWifiVersion = watch(`karty_wifi.${idx}.wersja.wersja`) || '';
   const compatibleBands = getCompatibleBands(currentWifiVersion);
   const maxSpeed = getMaxSpeedForWifiVersion(currentWifiVersion);
   const currentWifiValues = watch('karty_wifi') || [];
+
+  // Automatycznie ustaw nieobsługiwane pasma przy zmianie wersji WiFi
+  useEffect(() => {
+    if (currentWifiVersion) {
+      // Ustaw nieobsługiwane pasma na "Nie" (0)
+      if (!compatibleBands.pasmo24GHz) {
+        setValue(`karty_wifi.${idx}.pasmo.pasmo24GHz`, 0);
+      }
+      if (!compatibleBands.pasmo5GHz) {
+        setValue(`karty_wifi.${idx}.pasmo.pasmo5GHz`, 0);
+      }
+      if (!compatibleBands.pasmo6GHz) {
+        setValue(`karty_wifi.${idx}.pasmo.pasmo6GHz`, 0);
+      }
+    }
+  }, [currentWifiVersion, setValue, idx, compatibleBands]);
 
   return (
     <StyledWifiCardBox key={fieldId}>
