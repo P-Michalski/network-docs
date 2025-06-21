@@ -1,4 +1,4 @@
-import { call, put, takeLatest, select } from 'redux-saga/effects';
+import { call, put, takeLatest, select, delay } from 'redux-saga/effects';
 import { fetchDevicesDetails, addDevice, deleteDevice, updateDevice } from '../../api/device';
 import { removeDeviceConnections, restoreDeviceConnections } from './connectionsSaga';
 import {
@@ -22,6 +22,8 @@ import type { RootState } from '../../store';
 
 function* fetchDevicesSaga(): SagaIterator {
   try {
+    yield delay(2000);
+    
     const devices = yield call(fetchDevicesDetails);
     console.log('Saga: pobrane urządzenia jako klasy:', devices);
     

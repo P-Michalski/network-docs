@@ -1,6 +1,6 @@
 // src/hooks/useNetworkMap.ts
 import { useMemo, useState } from 'react';
-import type { DeviceDetails } from '../Models/DeviceDetails';
+import type { DeviceDetails } from '../Models/Interfaces/IDeviceDetails';
 
 export const useNetworkMap = (devices: DeviceDetails[]) => {
   const [selectedDevice, setSelectedDevice] = useState<DeviceDetails | null>(null);  // Tworzenie nodes dla ReactFlow z hierarchicznym layoutem
@@ -73,10 +73,8 @@ export const useNetworkMap = (devices: DeviceDetails[]) => {
         port.polaczenia_portu?.forEach(conn => {
           const targetDevice = devices.find(d => d.porty?.some(p => p.id_p === conn.id_p_2));
           if (targetDevice && device.urzadzenie.id_u && targetDevice.urzadzenie.id_u) {
-            const key = [device.urzadzenie.id_u, targetDevice.urzadzenie.id_u].sort().join('-') + '-' + [port.id_p, conn.id_p_2].sort().join('-');
-            if (!portEdgeSet.has(key)) {
+            const key = [device.urzadzenie.id_u, targetDevice.urzadzenie.id_u].sort().join('-') + '-' + [port.id_p, conn.id_p_2].sort().join('-');            if (!portEdgeSet.has(key)) {
               portEdgeSet.add(key);
-              const targetPort = targetDevice.porty?.find(p => p.id_p === conn.id_p_2);
               portEdges.push({
                 id: `port-${port.id_p}-${conn.id_p_2}`,
                 source: device.urzadzenie.id_u.toString(),
@@ -85,9 +83,6 @@ export const useNetworkMap = (devices: DeviceDetails[]) => {
                 targetHandle: `port-in-${conn.id_p_2}`,
                 animated: false,
                 style: { stroke: '#1976d2', strokeWidth: 2 },
-                label: `${port.nazwa} ↔ ${targetPort?.nazwa || ''}`,
-                labelStyle: { fontSize: '10px', fontWeight: 'bold' },
-                labelBgStyle: { fill: '#ffffff', fillOpacity: 0.9 },
               });
             }
           }
@@ -99,10 +94,8 @@ export const useNetworkMap = (devices: DeviceDetails[]) => {
         card.polaczenia_karty?.forEach(conn => {
           const targetDevice = devices.find(d => d.karty_wifi?.some(k => k.id_k === conn.id_k_2));
           if (targetDevice && device.urzadzenie.id_u && targetDevice.urzadzenie.id_u) {
-            const key = [device.urzadzenie.id_u, targetDevice.urzadzenie.id_u].sort().join('-') + '-' + [card.id_k, conn.id_k_2].sort().join('-');
-            if (!wifiEdgeSet.has(key)) {
+            const key = [device.urzadzenie.id_u, targetDevice.urzadzenie.id_u].sort().join('-') + '-' + [card.id_k, conn.id_k_2].sort().join('-');            if (!wifiEdgeSet.has(key)) {
               wifiEdgeSet.add(key);
-              const targetCard = targetDevice.karty_wifi?.find(k => k.id_k === conn.id_k_2);
               wifiEdges.push({
                 id: `wifi-${card.id_k}-${conn.id_k_2}`,
                 source: device.urzadzenie.id_u.toString(),
@@ -111,9 +104,6 @@ export const useNetworkMap = (devices: DeviceDetails[]) => {
                 targetHandle: `wifi-in-${conn.id_k_2}`,
                 animated: true,
                 style: { stroke: '#fbc02d', strokeWidth: 2, strokeDasharray: '8 6' },
-                label: `${card.nazwa} ↔ ${targetCard?.nazwa || ''}`,
-                labelStyle: { fontSize: '10px', fontWeight: 'bold' },
-                labelBgStyle: { fill: '#fff3e0', fillOpacity: 0.9 },
               });
             }
           }

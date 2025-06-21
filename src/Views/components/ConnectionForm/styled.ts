@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 
+// Style używane przez wiele komponentów ConnectionForm
+
 export const WideSidePanel = styled.aside`
   min-width: 480px;
   max-width: 700px;
@@ -50,6 +52,7 @@ export const TabBar = styled.div`
   gap: 8px;
   margin-bottom: 16px;
 `;
+
 export const TabButton = styled.button<{ active: boolean }>`
   background: ${({ active }) => (active ? '#1976d2' : '#e3f2fd')};
   color: ${({ active }) => (active ? '#fff' : '#1976d2')};

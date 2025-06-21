@@ -1,6 +1,6 @@
 import api from './axios';
-import type { Device } from '../Models/Device';
-import { DeviceDetails } from '../Models/DeviceDetails.class';
+import type { Device } from '../Models/Interfaces/IDevice';
+import { DeviceDetails } from '../Models/Classes/DeviceDetails.class';
 
 export const fetchDevicesDetails = async (): Promise<DeviceDetails[]> => {
   const response = await api.get('/urzadzenia/all-details');

@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import type { DeviceDetails } from '../../Models/DeviceDetails';
+import type { DeviceDetails } from '../../Models/Interfaces/IDeviceDetails';
 
 // Typ dla serializowalnych danych urządzenia
 

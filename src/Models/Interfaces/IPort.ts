@@ -1,5 +1,5 @@
-import type { PortConnection } from './PortConnection';
-import type { PortSpeed } from './PortSpeed';
+import type { PortConnection } from './IPortConnection';
+import type { PortSpeed } from './IPortSpeed';
 
 export type PortType = 'RJ45' | 'SFP';
 

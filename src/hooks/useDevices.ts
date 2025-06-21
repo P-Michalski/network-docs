@@ -2,7 +2,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useEffect } from 'react';
 import type { RootState } from '../store';
 import { fetchDevicesRequest, addDeviceRequest, updateDeviceRequest, deleteDeviceRequest } from '../Update/Slices/devicesSlice';
-import type { DeviceDetails } from '../Models/DeviceDetails';
+import type { DeviceDetails } from '../Models/Interfaces/IDeviceDetails';
 
 export const useDevices = () => {
   const dispatch = useDispatch();

@@ -1,9 +1,9 @@
 import { Device } from './Device.class';
-import type { DeviceType } from './DeviceType';
-import type { Location } from './Location';
-import type { MacAddress } from './MacAddress';
-import type { Port } from './Port';
-import type { WifiCard } from './WifiCard';
+import type { DeviceType } from '../Interfaces/IDeviceType';
+import type { Location } from '../Interfaces/ILocation';
+import type { MacAddress } from '../Interfaces/IMacAddress';
+import type { Port } from '../Interfaces/IPort';
+import type { WifiCard } from '../Interfaces/IWifiCard';
 
 export class DeviceDetails {
   urzadzenie: Device;

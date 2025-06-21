@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { DeviceDetails } from '../Models/DeviceDetails';
+import type { DeviceDetails } from '../Models/Interfaces/IDeviceDetails';
 
 export const useDeviceFiltering = (devices: DeviceDetails[]) => {
   const [activeTab, setActiveTab] = useState<string>('all');

@@ -4,7 +4,7 @@ import DeviceListPage from './Views/pages/DeviceListPage';
 import AddDevicePage from './Views/pages/AddDevicePage';
 import ConnectionManagerPage from './Views/pages/ConnectionManagerPage';
 import NetworkMapPage from './Views/pages/NetworkMapPage';
-import Navbar from './Views/Navbar';
+import Navbar from './Views/NavigationBar';
 
 const App: React.FC = () => {
   return (
