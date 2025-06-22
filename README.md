@@ -5,6 +5,7 @@ A modern web application for managing network devices, built with React, TypeScr
 ## 📚 Preview
 
 You can check the project here: [https://p-michalski.github.io/network-docs/](https://p-michalski.github.io/network-docs/)
+
 **Note**
 - Project requires properly set-up backend API and database. You can read on how to do that in a backend repository (you will find the link further below).
 
