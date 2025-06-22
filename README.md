@@ -1,66 +1,172 @@
 # Network Devices Manager
 
-Aplikacja webowa do zarządzania urządzeniami sieciowymi, napisana w React + TypeScript + Vite.
+A modern web application for managing network devices, built with React, TypeScript, and Vite. This frontend application provides an intuitive interface for visualizing, configuring, and managing network infrastructure.
 
-**Uwaga:** Backend (API) oraz baza danych działają lokalnie na Twoim komputerze (localhost). Aby w pełni korzystać z projektu, musisz uruchomić backend oraz bazę danych u siebie. Szczegóły i instrukcje znajdziesz w osobnym repozytorium:
+## 📚 Documentation
 
-(link pojawi się w swoim czasie)
+For detailed documentation, API reference, and user guides, visit: [https://p-michalski.github.io/network-docs/](https://p-michalski.github.io/network-docs/)
 
-W repozytorium backendu znajdzie się także instrukcja konfiguracji oraz uruchomienia API i bazy danych.
+## 🚀 Features
 
----
+- **Device Management**: Add, edit, and configure network devices with detailed specifications
+- **Network Visualization**: Interactive network map showing device connections and topology
+- **Connection Management**: Create and manage connections between devices (Ethernet, WiFi)
+- **Real-time Updates**: Live synchronization of network state changes
+- **Type Safety**: Full TypeScript support for enhanced development experience
 
-# React + TypeScript + Vite
+## 🛠️ Technologies Used
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Core Technologies
+- **React 18** - Modern UI library with hooks and concurrent features
+- **TypeScript** - Static typing for enhanced code quality and developer experience
+- **Vite** - Fast build tool and development server
 
-Currently, two official plugins are available:
+### State Management & Data Flow
+- **Redux Toolkit** - Modern Redux for predictable state management
+- **Redux Saga** - Side effect management for async operations
+- **React Hook Form** - Performant form handling with validation
+- **Zod** - Schema validation and type inference
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### UI & Styling
+- **Styled Components** - CSS-in-JS styling solution
+- **React Icons** - Comprehensive icon library
+- **React Flow Renderer** - Interactive node-based diagrams for network visualization
 
-## Expanding the ESLint configuration
+### Routing & Navigation
+- **React Router DOM** - Client-side routing and navigation
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### HTTP & API
+- **Axios** - Promise-based HTTP client for API communication
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Development Tools
+- **ESLint** - Code linting and style enforcement
+- **TypeScript ESLint** - TypeScript-specific linting rules
+- **Vite React Plugin** - React support for Vite
+
+## 📋 Prerequisites
+
+Before running this application, ensure you have the following installed:
+
+- **Node.js** (version 18 or higher)
+- **npm** or **yarn** package manager
+- **Backend API server** (running on localhost)
+- **Database** (configured and accessible by the backend)
+
+## ⚙️ Local Development Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repository-url>
+cd frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install Dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm install
+# or
+yarn install
 ```
+
+### 3. Environment Configuration
+
+# Development Configuration
+Make sure, your vite.config.ts looks something like this:
+```
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/network-docs/',
+  
+  server: {
+    middlewareMode: false,
+    proxy: {
+      '/api': 'http://localhost:3001'
+    }
+  }
+});
+```
+
+### 4. Start the Development Server
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+The application will be available at `http://localhost:5173`
+
+## 🗄️ Backend & Database Setup
+
+**Important**: This frontend application requires a running backend API and database to function properly.
+
+### Backend Requirements
+- **API Server**: Must be running on `localhost` (default port: 3000)
+- **Database**: MySQL
+- **CORS**: Backend must be configured to allow requests from the frontend origin
+
+### Backend Repository
+The backend code and setup instructions are available in a separate repository:
+[https://github.com/P-Michalski/network-docs-api](https://github.com/P-Michalski/network-docs-api)
+
+### Database Setup
+1. Follow the backend repository instructions to set up the database
+2. Run database migrations to create the required tables
+3. Optionally, import sample data using the provided SQL dump file
+
+
+## 🏗️ Build for Production
+
+```bash
+npm run build
+# or
+yarn build
+```
+
+The built files will be available in the `dist` directory.
+
+## 🧪 Linting
+
+```bash
+npm run lint
+# or
+yarn lint
+```
+
+## 📁 Project Structure
+
+```
+src/
+├── api/                    # API client and service functions
+├── hooks/                  # Custom React hooks
+├── Models/                 # TypeScript classes and interfaces
+├── Update/                 # Redux slices and sagas
+├── Views/                  # React components and pages
+│   ├── components/         # Reusable UI components
+│   ├── pages/             # Main application pages
+│   └── NavigationBar/     # Navigation components
+└── styles/                # Global styles
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**Application shows "Network Error" or API-related errors:**
+- Ensure the backend API server is running on the correct port
+- Check that CORS is properly configured on the backend
+- Verify the API base URL in your environment configuration
+
+**Database connection issues:**
+- Ensure the database server is running
+- Check database connection settings in the backend configuration
+- Verify that required database tables exist (run migrations)
+
+**Build or development server issues:**
+- Clear node_modules and reinstall dependencies: `rm -rf node_modules && npm install`
+- Clear Vite cache: `rm -rf node_modules/.vite`
+- Check Node.js version compatibility
