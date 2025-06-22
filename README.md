@@ -2,9 +2,11 @@
 
 A modern web application for managing network devices, built with React, TypeScript, and Vite. This frontend application provides an intuitive interface for visualizing, configuring, and managing network infrastructure.
 
-## 📚 Documentation
+## 📚 Preview
 
-For detailed documentation, API reference, and user guides, visit: [https://p-michalski.github.io/network-docs/](https://p-michalski.github.io/network-docs/)
+You can check the project here: [https://p-michalski.github.io/network-docs/](https://p-michalski.github.io/network-docs/)
+**Note**
+- Project requires properly set-up backend API and database. You can read on how to do that in a backend repository (you will find the link further below).
 
 ## 🚀 Features
 
@@ -116,7 +118,6 @@ The backend code and setup instructions are available in a separate repository:
 ### Database Setup
 1. Follow the backend repository instructions to set up the database
 2. Run database migrations to create the required tables
-3. Optionally, import sample data using the provided SQL dump file
 
 
 ## 🏗️ Build for Production
