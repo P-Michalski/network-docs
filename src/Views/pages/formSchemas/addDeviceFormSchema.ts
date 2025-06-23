@@ -53,22 +53,31 @@ export const createDeviceDetailsSchema = (
       miejsce: z.string().min(1, 'Podaj miejsce'),
       szafa: z.string().min(1, 'Podaj szafę'),
       rack: z.string().min(1, 'Podaj rack'),
-    }),
-    mac: z.object({
-      MAC: z.string().min(1, 'Podaj adres MAC').refine(
-        (mac) => {
-          // Podczas edycji, pozwól na zachowanie tego samego MAC
-          if (editingDeviceId) {
-            const currentDevice = existingDevices.find(d => d.urzadzenie.id_u === editingDeviceId);
-            if (currentDevice && currentDevice.mac.MAC === mac) {
-              return true; // Pozwól na zachowanie obecnego MAC podczas edycji
+    }),    mac: z.object({
+      MAC: z.string()
+        .min(1, 'Podaj adres MAC')
+        .refine(
+          (mac) => {
+            // Sprawdź format MAC (XX:XX:XX:XX:XX:XX lub XX-XX-XX-XX-XX-XX)
+            const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+            return macRegex.test(mac);
+          },
+          { message: 'Nieprawidłowy format adresu MAC. Użyj formatu XX:XX:XX:XX:XX:XX lub XX-XX-XX-XX-XX-XX' }
+        )
+        .refine(
+          (mac) => {
+            // Podczas edycji, pozwól na zachowanie tego samego MAC
+            if (editingDeviceId) {
+              const currentDevice = existingDevices.find(d => d.urzadzenie.id_u === editingDeviceId);
+              if (currentDevice && currentDevice.mac.MAC === mac) {
+                return true; // Pozwól na zachowanie obecnego MAC podczas edycji
+              }
             }
-          }
-          // Sprawdź czy MAC nie jest już używany przez inne urządzenie
-          return !existingDevices.some(device => device.mac.MAC === mac);
-        },
-        { message: 'Ten adres MAC jest już używany przez inne urządzenie' }
-      ),
+            // Sprawdź czy MAC nie jest już używany przez inne urządzenie
+            return !existingDevices.some(device => device.mac.MAC === mac);
+          },
+          { message: 'Ten adres MAC jest już używany przez inne urządzenie' }
+        ),
     }),
     porty: z.array(z.object({
       nazwa: z.string().min(1, 'Podaj nazwę portu'),
@@ -228,4 +237,28 @@ export const getAllowedSpeedsForWifiVersion = (wifiVersion: string) => {
   const maxSpeed = getMaxSpeedForWifiVersion(wifiVersion);
   const commonSpeeds = [10, 11, 54, 100, 150, 300, 450, 600, 867, 1200, 1733, 2400, 3467, 4800, 6933, 9608, 46000];
   return commonSpeeds.filter(speed => speed <= maxSpeed);
+};
+
+// Funkcje pomocnicze do walidacji i formatowania MAC
+export const isValidMacAddress = (mac: string): boolean => {
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  return macRegex.test(mac);
+};
+
+export const formatMacAddress = (mac: string, separator: ':' | '-' = ':'): string => {
+  // Usuń wszystkie znaki niealfanumeryczne i konwertuj na wielkie litery
+  const cleanMac = mac.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
+  
+  // Sprawdź czy ma dokładnie 12 znaków
+  if (cleanMac.length !== 12) {
+    return mac; // Zwróć oryginalny string jeśli nie można sformatować
+  }
+  
+  // Podziel na pary i połącz separatorem
+  return cleanMac.match(/.{2}/g)?.join(separator) || mac;
+};
+
+export const normalizeMacAddress = (mac: string): string => {
+  // Normalizuje MAC do formatu XX:XX:XX:XX:XX:XX z wielkimi literami
+  return formatMacAddress(mac, ':');
 };

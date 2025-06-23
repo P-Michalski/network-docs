@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFormSync } from '../../../hooks/useFormSync';
-import { createDeviceDetailsSchema, type DeviceDetailsForm, defaultFormValues, getMinPortsForDeviceType } from '../../pages/formSchemas/addDeviceFormSchema';
+import { createDeviceDetailsSchema, type DeviceDetailsForm, defaultFormValues, getMinPortsForDeviceType, formatMacAddress } from '../../pages/formSchemas/addDeviceFormSchema';
 import { Input, ErrorMsg, Select, DeviceForm as StyledDeviceForm, CancelEditButton, Button, AddButton, ConnectionWarning } from './styled';
 import { WifiCardBox } from './WifiCardBox';
 import { PortItem } from './PortItem';
@@ -195,11 +195,21 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
           <Input {...register('lokalizacja.rack')} placeholder="Rack" />
           {errors.lokalizacja?.rack && <ErrorMsg>{errors.lokalizacja.rack.message}</ErrorMsg>}
         </FormField>
-      </Fieldset>        
-      <Fieldset>
+      </Fieldset>          <Fieldset>
         <Legend>MAC</Legend>
         <FormField>
-          <Input {...register('mac.MAC')} placeholder="MAC" />
+          <Input 
+            {...register('mac.MAC')} 
+            placeholder="XX:XX:XX:XX:XX:XX"
+            onBlur={(e) => {
+              // Automatycznie formatuj MAC przy opuszczeniu pola
+              const formatted = formatMacAddress(e.target.value);
+              if (formatted !== e.target.value) {
+                form.setValue('mac.MAC', formatted);
+              }
+            }}
+            style={{ textTransform: 'uppercase' }}
+          />
           {errors.mac?.MAC && <ErrorMsg>{errors.mac.MAC.message}</ErrorMsg>}
         </FormField>
       </Fieldset>
