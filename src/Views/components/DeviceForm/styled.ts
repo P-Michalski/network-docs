@@ -78,9 +78,15 @@ export const RemoveButton = styled.button`
   cursor: pointer;
   margin: 4px 0 4px 8px;
   transition: background 0.2s, color 0.2s;
-  &:hover {
+  &:hover:not(:disabled) {
     background: #d32f2f;
     color: #fff;
+  }
+  &:disabled {
+    background: #f5f5f5;
+    color: #bdbdbd;
+    border-color: #bdbdbd;
+    cursor: not-allowed;
   }
 `;
 

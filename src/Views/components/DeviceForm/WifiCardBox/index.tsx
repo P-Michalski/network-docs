@@ -24,13 +24,15 @@ interface WifiCardBoxProps {
   fieldId: string;
   form: UseFormReturn<DeviceDetailsForm>;
   onRemove: (index: number) => void;
+  canRemove?: boolean;
 }
 
 export const WifiCardBox: React.FC<WifiCardBoxProps> = ({
   index: idx,
   fieldId,
   form,
-  onRemove
+  onRemove,
+  canRemove = true
 }) => {
   const { register, formState: { errors }, watch, setValue } = form;
   
@@ -158,9 +160,15 @@ export const WifiCardBox: React.FC<WifiCardBoxProps> = ({
             )}
           </FormField>
           {errors.karty_wifi?.[idx]?.predkosc?.predkosc && <ErrorMsg>{errors.karty_wifi[idx]?.predkosc?.predkosc?.message}</ErrorMsg>}
-        </WifiStandardFieldset>
-      </WifiCardInnerRow>
-      <RemoveButton type="button" onClick={() => onRemove(idx)}>Usuń kartę WiFi</RemoveButton>
+        </WifiStandardFieldset>      </WifiCardInnerRow>
+      <RemoveButton 
+        type="button" 
+        onClick={() => onRemove(idx)}
+        disabled={!canRemove}
+        title={!canRemove ? "Nie można usunąć - Access Point musi mieć minimum jedną kartę WiFi" : "Usuń kartę WiFi"}
+      >
+        Usuń kartę WiFi
+      </RemoveButton>
     </StyledWifiCardBox>
   );
 };

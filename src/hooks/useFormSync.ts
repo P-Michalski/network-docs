@@ -1,15 +1,22 @@
 import { useEffect } from 'react';
 import { type UseFormReturn, useFieldArray } from 'react-hook-form';
+import { getMinPortsForDeviceType } from '../Views/pages/formSchemas/addDeviceFormSchema';
 
 export const useFormSync = (
   form: UseFormReturn<any>,
   watchField: string,
   arrayName: string,
-  defaultItem: any
+  defaultItem: any,
+  minItems?: number
 ) => {
   const { control, watch, setValue } = form;
   const { fields, append, remove } = useFieldArray({ control, name: arrayName });
   const watchedValue = watch(watchField);
+  
+  // Dla portów, sprawdź minimum według typu urządzenia
+  const deviceType = watch('typ.typ_u');
+  const dynamicMinItems = arrayName === 'porty' && deviceType ? 
+    getMinPortsForDeviceType(deviceType) : (minItems || 1);
 
   useEffect(() => {
     if (typeof watchedValue === 'number' && watchedValue > 0) {
@@ -34,10 +41,13 @@ export const useFormSync = (
     setValue(watchField, fields.length + 1);
   };
 
-  // Custom remove function that also updates the count field
+  // Custom remove function that also updates the count field and respects minimum
   const removeWithSync = (index: number) => {
-    remove(index);
-    setValue(watchField, Math.max(1, fields.length - 1)); // Minimum 1
+    const newLength = fields.length - 1;
+    if (newLength >= dynamicMinItems) {
+      remove(index);
+      setValue(watchField, Math.max(dynamicMinItems, newLength));
+    }
   };
 
   return { 
@@ -45,6 +55,7 @@ export const useFormSync = (
     append: appendWithSync, 
     remove: removeWithSync,
     originalAppend: append,
-    originalRemove: remove
+    originalRemove: remove,
+    canRemove: fields.length > dynamicMinItems
   };
 };

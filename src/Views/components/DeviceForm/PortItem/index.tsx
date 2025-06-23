@@ -15,13 +15,15 @@ interface PortItemProps {
   fieldId: string;
   form: UseFormReturn<DeviceDetailsForm>;
   onRemove: (index: number) => void;
+  canRemove: boolean;
 }
 
 export const PortItem: React.FC<PortItemProps> = ({
   index: idx,
   fieldId,
   form,
-  onRemove
+  onRemove,
+  canRemove
 }) => {
   const { register, formState: { errors } } = form;
 
@@ -53,10 +55,16 @@ export const PortItem: React.FC<PortItemProps> = ({
         <option value="5Gb/s">5Gb/s</option>
         <option value="10Gb/s">10Gb/s</option>
         <option value="25Gb/s">25Gb/s</option>
-      </Select>
-      {errors.porty?.[idx]?.predkosc_portu?.predkosc && <ErrorMsg>{errors.porty[idx]?.predkosc_portu?.predkosc?.message}</ErrorMsg>}
+      </Select>      {errors.porty?.[idx]?.predkosc_portu?.predkosc && <ErrorMsg>{errors.porty[idx]?.predkosc_portu?.predkosc?.message}</ErrorMsg>}
       
-      <RemoveButton type="button" onClick={() => onRemove(idx)}>Usuń port</RemoveButton>
+      <RemoveButton 
+        type="button" 
+        onClick={() => onRemove(idx)}
+        disabled={!canRemove}
+        title={!canRemove ? "Nie można usunąć - minimum portów dla tego typu urządzenia" : "Usuń port"}
+      >
+        Usuń port
+      </RemoveButton>
     </FormField>
   );
 };

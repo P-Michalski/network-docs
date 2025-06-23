@@ -45,17 +45,15 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
       }
     }
   }, [currentDeviceType, minPorts, form, watch]);
-  
   // Użyj hooków do synchronizacji pól
-  const { fields: portFields, append: appendPort, remove: removePort } = useFormSync(form, 'urzadzenie.ilosc_portow', 'porty', { 
+  const { fields: portFields, append: appendPort, remove: removePort, canRemove: canRemovePort } = useFormSync(form, 'urzadzenie.ilosc_portow', 'porty', { 
     nazwa: '', 
     status: '',    
     typ: '' as any,
-    predkosc_portu: { predkosc: '1Gb/s' as const },
+    predkosc_portu: { predkosc: '' as any }, // Pusta wartość zamiast 1Gb/s
     polaczenia_portu: [] 
   });
   const { fields: wifiFields, append: appendWifi, remove: removeWifi } = useFieldArray({ control: form.control, name: 'karty_wifi' });
-  
   // Automatycznie zarządzaj kartami WiFi przy zmianie typu urządzenia
   useEffect(() => {
     const currentWifiCount = wifiFields.length;
@@ -67,16 +65,20 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
           removeWifi(i);
         }
       }
-    } else if (currentDeviceType && currentWifiCount === 0) {
-      // Dla innych typów - dodaj jedną kartę WiFi jeśli nie ma żadnej
-      appendWifi({
-        nazwa: '', 
-        status: '',
-        pasmo: { pasmo24GHz: 0, pasmo5GHz: 0, pasmo6GHz: 0 },
-        wersja: { wersja: '' as any },
-        predkosc: { predkosc: 0 },
-      });
-    }  }, [currentDeviceType, wifiFields.length, removeWifi, appendWifi]);
+    } else if (currentDeviceType === 'Access Point') {
+      // Dla Access Point - wymuś minimum jedną kartę WiFi
+      if (currentWifiCount === 0) {
+        appendWifi({
+          nazwa: '', 
+          status: '',
+          pasmo: { pasmo24GHz: 0, pasmo5GHz: 0, pasmo6GHz: 0 },
+          wersja: { wersja: '' as any },
+          predkosc: { predkosc: 0 },
+        });
+      }
+    }
+    // Dla innych typów urządzeń (Router, PC) karty WiFi są opcjonalne - nie dodawaj automatycznie
+  }, [currentDeviceType, wifiFields.length, removeWifi, appendWifi]);
 
   // Ustaw wartości formularza przy edycji lub wyczyść po dodaniu
   useEffect(() => {
@@ -94,16 +96,16 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
           typ: p.typ || '',
           predkosc_portu: p.predkosc_portu || { predkosc: '' },
           polaczenia_portu: p.polaczenia_portu || [],
-        })),
-        karty_wifi: (editingDevice.karty_wifi && editingDevice.karty_wifi.length > 0 ? editingDevice.karty_wifi : 
-          // Dla Switch nie dodawaj kart WiFi, dla innych typów dodaj jedną pustą kartę jeśli nie ma żadnej
-          editingDevice.typ?.typ_u === 'Switch' ? [] : [{
+        })),        karty_wifi: (editingDevice.karty_wifi && editingDevice.karty_wifi.length > 0 ? editingDevice.karty_wifi : 
+          // Dla Switch usuń karty WiFi, dla Access Point wymuś minimum jedną kartę
+          editingDevice.typ?.typ_u === 'Switch' ? [] : 
+          editingDevice.typ?.typ_u === 'Access Point' ? [{
             nazwa: '', 
             status: '',
             pasmo: { pasmo24GHz: 0, pasmo5GHz: 0, pasmo6GHz: 0 },
             wersja: { wersja: '' as any },
             predkosc: { predkosc: 0 },
-          }]
+          }] : []
         ).map((k: any) => ({
           ...k,
           pasmo: {
@@ -202,28 +204,27 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
         </FormField>
       </Fieldset>
       <Fieldset>
-        <Legend>Porty</Legend>          
-        {portFields.map((field, idx) => (
+        <Legend>Porty</Legend>            {portFields.map((field, idx) => (
           <PortItem
               key={field.id}
               index={idx}
               fieldId={field.id}
               form={form}
               onRemove={removePort}
+              canRemove={canRemovePort}
           />
-        ))}
-        <AddButton type="button" onClick={() => appendPort({ 
+        ))}        <AddButton type="button" onClick={() => appendPort({ 
           nazwa: '', 
           status: '', 
           typ: '' as any,
-          predkosc_portu: { predkosc: '' as any },
+          predkosc_portu: { predkosc: '' as any }, // Pusta wartość zamiast automatycznej
           polaczenia_portu: [] 
         })}>Dodaj port</AddButton>
         </Fieldset>
       {currentDeviceType !== 'Switch' && (
         <Fieldset>
-          <Legend>Karty WiFi</Legend>
-          {wifiFields.map((field, idx) => {
+          <Legend>Karty WiFi</Legend>          {wifiFields.map((field, idx) => {
+            const canRemoveWifi = currentDeviceType === 'Access Point' ? wifiFields.length > 1 : true;
             return (
               <WifiCardBox
                     key={field.id}
@@ -231,9 +232,10 @@ export const DeviceForm = ({ deviceList, editingDevice, onSubmit, onCancelEdit }
                     fieldId={field.id}
                     form={form}
                     onRemove={removeWifi}
+                    canRemove={canRemoveWifi}
                   />
-          );
-        })}
+            );
+          })}
       {currentDeviceType !== 'Switch' && (
         <AddButton type="button" onClick={() => appendWifi({
           nazwa: '', 

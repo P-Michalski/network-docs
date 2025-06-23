@@ -30,7 +30,7 @@ const WIFI_MAX_SPEEDS = {
 
 // Minimum portów według typu urządzenia
 const MIN_PORTS_BY_TYPE = {
-  'Router': 2,
+  'Router': 1,
   'Switch': 2,
   'Access Point': 1,
   'PC': 1,
@@ -162,12 +162,15 @@ export const createDeviceDetailsSchema = (
         message: `${deviceType} musi mieć minimum ${minPorts} portów`,
         path: ['urzadzenie', 'ilosc_portow']
       };
-    }
-  ).refine(
+    }  ).refine(
     (data) => {
       // Dla urządzeń typu Switch, karty WiFi nie są wymagane
       if (data.typ.typ_u === 'Switch') {
         return true; // Switch może mieć puste karty WiFi
+      }
+      // Dla Access Point wymagana jest minimum jedna karta WiFi
+      if (data.typ.typ_u === 'Access Point') {
+        return data.karty_wifi && data.karty_wifi.length > 0;
       }
       // Dla innych typów urządzeń, sprawdź czy karty WiFi są poprawnie wypełnione jeśli istnieją
       if (data.karty_wifi && data.karty_wifi.length > 0) {
@@ -176,12 +179,14 @@ export const createDeviceDetailsSchema = (
           (karta.pasmo.pasmo24GHz === 1 || karta.pasmo.pasmo5GHz === 1 || karta.pasmo.pasmo6GHz === 1)
         );
       }
-      return true; // Karty WiFi są opcjonalne dla wszystkich urządzeń
+      return true; // Karty WiFi są opcjonalne dla Router i PC
     },
-    { 
-      message: 'Dla urządzeń innych niż Switch, karty WiFi muszą być poprawnie wypełnione',
+    (data) => ({
+      message: data.typ.typ_u === 'Access Point' 
+        ? 'Access Point musi mieć przynajmniej jedną kartę WiFi'
+        : 'Karty WiFi muszą być poprawnie wypełnione',
       path: ['karty_wifi']
-    }
+    })
   );
 };
 
@@ -198,13 +203,7 @@ export const defaultFormValues: DeviceDetailsForm = {
     predkosc_portu: { predkosc: '' as any }, // Brak domyślnej wartości
     polaczenia_portu: [] 
   }],
-  karty_wifi: [{
-    nazwa: '', 
-    status: '',
-    pasmo: { pasmo24GHz: 0, pasmo5GHz: 0, pasmo6GHz: 0 },
-    wersja: { wersja: '' as any },
-    predkosc: { predkosc: 0 },
-  }], // Jedna karta WiFi jako domyślna
+  karty_wifi: [], // Brak domyślnych kart WiFi - będą dodawane dynamicznie w zależności od typu urządzenia
   urzadzenie: { nazwa_urzadzenia: '', ilosc_portow: 1 },
   typ: { typ_u: '' },
   lokalizacja: { miejsce: '', szafa: '', rack: '' },
