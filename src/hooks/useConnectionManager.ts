@@ -10,8 +10,7 @@ export const useConnectionManager = () => {
   const dispatch = useDispatch();
   const { loading: connectionsLoading, error: connectionsError, addConnection, removeConnection } = useConnections();
     // Form management
-  const formHook = useConnectionForm();
-  const {
+  const formHook = useConnectionForm();  const {
     connectionType,
     device1,
     device2,
@@ -32,8 +31,7 @@ export const useConnectionManager = () => {
     setPortOrCard2,
     setSuccess,
     resetForm,
-    isPortOccupied,
-    isWifiCardOccupied
+    isPortOccupied
   } = formHook;
   
   // Validation
@@ -99,9 +97,7 @@ export const useConnectionManager = () => {
     );
 
     // Additional validations specific to this component
-    const additionalErrors: any = {};
-
-    // Check if ports/cards are occupied or inactive
+    const additionalErrors: any = {};    // Check if ports/cards are occupied or inactive
     if (portOrCard1 && device1) {
       if (connectionType === 'port') {
         const port1 = device1Obj?.porty?.find(p => p.id_p === portOrCard1);
@@ -110,11 +106,14 @@ export const useConnectionManager = () => {
         } else if (port1?.status !== 'aktywny') {
           additionalErrors.portOrCard1 = 'Ten port jest nieaktywny';
         }
-      } else if (connectionType === 'wifi' && isWifiCardOccupied(portOrCard1 as number, device1 as number)) {
-        additionalErrors.portOrCard1 = 'Ta karta WiFi jest już zajęta';
+      } else if (connectionType === 'wifi') {
+        // For WiFi cards, only check if the card is active
+        const card1 = device1Obj?.karty_wifi?.find(c => c.id_k === portOrCard1);
+        if (card1?.status !== 'aktywny') {
+          additionalErrors.portOrCard1 = 'Ta karta WiFi jest nieaktywna';
+        }
       }
-    }
-    
+    }    
     if (portOrCard2 && device2) {
       if (connectionType === 'port') {
         const port2 = device2Obj?.porty?.find(p => p.id_p === portOrCard2);
@@ -123,15 +122,35 @@ export const useConnectionManager = () => {
         } else if (port2?.status !== 'aktywny') {
           additionalErrors.portOrCard2 = 'Ten port jest nieaktywny';
         }
-      } else if (connectionType === 'wifi' && isWifiCardOccupied(portOrCard2 as number, device2 as number)) {
-        additionalErrors.portOrCard2 = 'Ta karta WiFi jest już zajęta';
+      } else if (connectionType === 'wifi') {
+        // For WiFi cards, only check if the card is active
+        const card2 = device2Obj?.karty_wifi?.find(c => c.id_k === portOrCard2);
+        if (card2?.status !== 'aktywny') {
+          additionalErrors.portOrCard2 = 'Ta karta WiFi jest nieaktywna';
+        }
       }
     }
-    
-    // Check if devices are already connected
-    if (device1 && device2 && device1 !== device2) {
-      if (areDevicesConnected(device1 as number, device2 as number, connectionType)) {
-        additionalErrors.general = `Urządzenia są już połączone przez ${connectionType === 'port' ? 'port' : 'WiFi'}`;
+      // Check if devices/cards are already connected
+    if (device1 && device2 && device1 !== device2 && portOrCard1 && portOrCard2) {
+      if (connectionType === 'port') {
+        // For ports, check if devices are already connected by any port
+        if (areDevicesConnected(device1 as number, device2 as number, connectionType)) {
+          additionalErrors.general = `Urządzenia są już połączone przez port`;
+        }      } else if (connectionType === 'wifi') {
+        // For WiFi, check if these specific cards are already connected
+        const areCardsConnected = allConnections.some(conn => {
+          if (conn.type !== 'wifi') return false;
+          
+          // Check if these specific cards are already connected
+          return (
+            (conn.id_k_1 === portOrCard1 && conn.id_k_2 === portOrCard2) ||
+            (conn.id_k_1 === portOrCard2 && conn.id_k_2 === portOrCard1)
+          );
+        });
+        
+        if (areCardsConnected) {
+          additionalErrors.general = 'Te karty WiFi są już ze sobą połączone';
+        }
       }
     }
 
@@ -267,11 +286,9 @@ export const useConnectionManager = () => {
     handleAddConnection,
     handleRemoveConnection,
     handleShowInfo,
-    handleCloseInfo,
-    
+    handleCloseInfo,    
     // Helper functions
     isPortOccupied,
-    isWifiCardOccupied,
     areDevicesConnected
   };
 };

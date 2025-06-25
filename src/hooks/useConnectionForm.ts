@@ -26,16 +26,9 @@ export const useConnectionForm = () => {
   const isPortOccupied = (portId: number, deviceId: number) => {
     const device = devices.find(d => d.urzadzenie.id_u === deviceId);
     const port = device?.porty?.find(p => p.id_p === portId);
-    return port?.polaczenia_portu && port.polaczenia_portu.length > 0;
-  };
+    return port?.polaczenia_portu && port.polaczenia_portu.length > 0;  };
 
-  const isWifiCardOccupied = (cardId: number, deviceId: number) => {
-    const device = devices.find(d => d.urzadzenie.id_u === deviceId);
-    const card = device?.karty_wifi?.find(c => c.id_k === cardId);
-    return card?.polaczenia_karty && card.polaczenia_karty.length > 0;
-  };
-
-  // Available (unoccupied) ports/cards
+  // Available (unoccupied) ports
   const availablePorts1 = useMemo(() => 
     allPorts1.filter(port => !isPortOccupied(port.id_p, device1 as number)),
     [allPorts1, device1, devices]
@@ -45,16 +38,19 @@ export const useConnectionForm = () => {
     allPorts2.filter(port => !isPortOccupied(port.id_p, device2 as number)),
     [allPorts2, device2, devices]
   );
-
+  // Available WiFi cards (not filtering by occupancy - cards can have multiple connections)
   const availableCards1 = useMemo(() => 
-    allCards1.filter(card => !isWifiCardOccupied(card.id_k, device1 as number)),
-    [allCards1, device1, devices]
+    allCards1.filter(card => card.status === 'aktywny'),
+    [allCards1]
   );
 
   const availableCards2 = useMemo(() => {
-    if (!portOrCard1) return allCards2.filter(card => !isWifiCardOccupied(card.id_k, device2 as number));
+    if (!portOrCard1) {
+      // Show all active cards
+      return allCards2.filter(card => card.status === 'aktywny');
+    }
     
-    // For WiFi, exclude cards already connected to selected card
+    // For WiFi, exclude cards already connected to selected card to prevent duplicate connections
     const connectedIds = new Set<number>();
     const selectedCard = allCards1.find(c => c.id_k === portOrCard1);
     selectedCard?.polaczenia_karty?.forEach((conn: any) => {
@@ -63,11 +59,11 @@ export const useConnectionForm = () => {
     });
     
     return allCards2.filter(card => 
-      !isWifiCardOccupied(card.id_k, device2 as number) &&
+      card.status === 'aktywny' &&
       card.id_k !== portOrCard1 && 
       !connectedIds.has(card.id_k)
     );
-  }, [allCards2, device2, devices, portOrCard1, allCards1]);
+  }, [allCards2, portOrCard1, allCards1]);
 
   // Reset form
   const resetForm = () => {
@@ -130,13 +126,11 @@ export const useConnectionForm = () => {
     setConnectionType: handleConnectionTypeChange,
     setDevice1: handleDevice1Change,
     setDevice2: handleDevice2Change,
-    setPortOrCard1,
-    setPortOrCard2,
+    setPortOrCard1,    setPortOrCard2,
     setSuccess,
     resetForm,
     
     // Helper functions
-    isPortOccupied,
-    isWifiCardOccupied
+    isPortOccupied
   };
 };
