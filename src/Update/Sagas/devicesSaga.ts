@@ -15,7 +15,6 @@ import {
   updateDeviceSuccess,
   updateDeviceFailure,
 } from '../Slices/devicesSlice';
-// Dodaj importy axios (do połączeń) i ewentualnie store, jeśli potrzebne
 
 import type { SagaIterator } from 'redux-saga';
 import type { RootState } from '../../store';
